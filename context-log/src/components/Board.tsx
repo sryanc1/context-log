@@ -1,37 +1,44 @@
-import {Stage, Layer} from 'react-konva';
-import {useProjects} from '../hooks/useProjects';
-import {useItems} from '../hooks/useItems';
+import { useEffect, useRef, useState } from 'react';
+import { Stage, Layer } from 'react-konva';
+import { useProjects } from '../hooks/useProjects';
+import { useItems } from '../hooks/useItems';
 import { ProjectContainer } from './ProjectContainer';
 
 export function Board() {
-    const {projects, loading: projectsLoading} = useProjects();
-    const {items, loading: itemsLoading} = useItems();
+  const { projects, loading: projectsLoading } = useProjects();
+  const { items, loading: itemsLoading } = useItems();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
 
-    if (projectsLoading || itemsLoading) {
-        return (
-            <div className="loading-screen">
-                <p>Loading...</p>
-            </div>
-        );
-    }
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setSize({ width, height });
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
-    const visibleProjects = projects.filter((p) => !p.archived);
+  if (projectsLoading || itemsLoading) {
+    return <p>Loading board...</p>;
+  }
 
-    return (
-        <Stage 
-            width={window.innerWidth}
-            height={window.innerHeight-40}
-            draggable
-        >
-            <Layer>
-                {visibleProjects.map((project) => (
-                    <ProjectContainer
-                        key={project.id}
-                        project={project}
-                        items={items.filter((item) => item.containerId === project.id)}
-                    />
-                ))}
-            </Layer>
-        </Stage>
-    )
+  const visibleProjects = projects.filter((p) => !p.archived);
+
+  return (
+    <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
+      <Stage width={size.width} height={size.height} draggable>
+        <Layer>
+          {visibleProjects.map((project) => (
+            <ProjectContainer
+              key={project.id}
+              project={project}
+              items={items.filter((item) => item.containerId === project.id)}
+            />
+          ))}
+        </Layer>
+      </Stage>
+    </div>
+  );
 }
