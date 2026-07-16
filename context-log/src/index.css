@@ -62,26 +62,32 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-}
-
 body {
   margin: 0;
 }
 
-.app{
-  width: 100%;
-  height: 100%;  
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
-.app-body{
-  width: 100%;
+.app {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  flex-shrink: 0;
+  /* your existing topbar styles stay as-is */
+}
+
+.app-body {
+  flex: 1;
+  min-height: 0; /* see note below — this one's easy to skip and regret */
+  width: 100%;
 }
 
 h1,
