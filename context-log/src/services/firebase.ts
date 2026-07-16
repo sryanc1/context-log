@@ -108,14 +108,17 @@ export function subscribeToProjects(callback: (projects: Project[]) => void) {
     });
 }
 
-export async function createProject(title: string, x: number, y: number) {
+export async function createProject(title: string, centerX: number, centerY: number) {
+    const width = 480;
+    const height = 220;
     const now = Date.now();
     const docRef = await addDoc(projectsCollection, {
         title,
         description: '',
-        x, y,
-        width: 480,
-        height: 220,
+        x: centerX - width/2, 
+        y: centerY - height/2,
+        width,
+        height,
         archived: false,
         createdAt: now,
         updatedAt: now,

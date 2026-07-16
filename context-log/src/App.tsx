@@ -1,12 +1,15 @@
-import { useState} from 'react';
+import { useCallback, useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { Login } from './components/Login';
-import {Board} from './components/Board';
+import {Board, type Viewport} from './components/Board';
 import { createProject } from './services/firebase';
 
 function App() {
   const { user, loading, logout } = useAuth();
   const [creating, setCreating] = useState(false);
+  const [viewport, setViewport] = useState<Viewport>({ x:0, y:0, width:0, height:0})
+  
+  const handelViewportChange = useCallback((v: Viewport) => setViewport(v), []);
 
   if(loading) {
     return (
@@ -23,8 +26,9 @@ function App() {
   const handleNewProject = async () => {
     setCreating(true)
     try {
-      // Rough "somewhere visible" default - refinded below
-      await createProject('New project', 100, 100);      
+      const worldCenterX = viewport.width /2 - viewport.x;
+      const worldCenterY = viewport.width /2 - viewport.y
+      await createProject('New project', worldCenterX, worldCenterY);      
     } finally {
       setCreating(false)      
     }
@@ -44,7 +48,7 @@ function App() {
       </header>
 
       <main className="app-body">
-        <Board />
+        <Board onViewportChange={handelViewportChange}/>
       </main>
     </div>
   );
