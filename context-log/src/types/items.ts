@@ -18,8 +18,8 @@ export interface BaseItem {
     containerId: string; // which project this card belongs to, if any
     x: number; // position local to the contatiner
     y: number; 
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: number;
+    updatedAt: number;
 }
 
 // Type-specific extension - same pattern as cameraPin / TaskPin split
@@ -41,8 +41,8 @@ export interface Project {
     width: number;
     height: number;
     archived: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: number;
+    updatedAt: number;
 }
 
 export interface Relationship {
