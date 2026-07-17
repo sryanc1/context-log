@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Stage, Layer } from 'react-konva';
+import { Stage, Layer, Rect } from 'react-konva';
 import type Konva from 'konva';
 import { useProjects } from '../hooks/useProjects';
 import { useItems } from '../hooks/useItems';
 import { ProjectContainer } from './ProjectContainer';
+import { colors } from '../theme';
+
 
 export interface Viewport { x: number; y: number; width: number; height: number; scale: number; }
 
@@ -32,6 +34,25 @@ export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) =>
     useEffect(() => {
         onViewportChange({ ...stagePos, ...size, scale: stageScale });
     }, [stagePos, size, stageScale, onViewportChange]);
+
+    const [dotPattern, setDotPattern] = useState<HTMLImageElement | null>(null);
+
+    useEffect(() => {
+        const size = 24;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.fillStyle = colors.gridDot;
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, 1.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        const img = new window.Image();
+        img.onload = () => setDotPattern(img);
+        img.src = canvas.toDataURL();
+    }, []);
 
     const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
         e.evt.preventDefault();
@@ -74,28 +95,32 @@ export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) =>
     }
 
     return (
-        <div ref={setContainerNode} style={{ width: '100%', height: '100%' }}>
-        <Stage
-            width={size.width}
-            height={size.height}
-            x={stagePos.x}
-            y={stagePos.y}
-            scaleX={stageScale}
-            scaleY={stageScale}
-            draggable
-            onDragEnd={(e) => setStagePos({ x: e.target.x(), y: e.target.y() })}
-            onWheel={handleWheel}
-        >
-            <Layer>
-            {orderedProjects.map((project) => (
-                <ProjectContainer
-                key={project.id}
-                project={project}
-                items={items.filter((item) => item.containerId === project.id)}
+        <div ref={setContainerNode} style={{ width: '100%', height: '100%', backgroundColor: colors.canvasBg }}>
+            <Stage
+                width={size.width}
+                height={size.height}
+                x={stagePos.x}
+                y={stagePos.y}
+                scaleX={stageScale}
+                scaleY={stageScale}
+                draggable
+                onDragEnd={(e) => setStagePos({ x: e.target.x(), y: e.target.y() })}
+                onWheel={handleWheel}
+            >
+                <Layer>
+                {dotPattern && (
+                <Rect
+                    x={-10000} y={-10000} width={20000} height={20000}
+                    fillPatternImage={dotPattern}
+                    fillPatternRepeat="repeat"
+                    listening={false}
                 />
-            ))}
-            </Layer>
-        </Stage>
+                )}
+                {orderedProjects.map((project) => (
+                    <ProjectContainer key={project.id} project={project} items={items.filter((i) => i.containerId === project.id)} />
+                ))}
+                </Layer>
+            </Stage>
         </div>
     );
 }
