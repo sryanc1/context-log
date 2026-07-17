@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Stage, Layer } from 'react-konva';
 import { useProjects } from '../hooks/useProjects';
 import { useItems } from '../hooks/useItems';
@@ -9,19 +9,19 @@ export interface Viewport { x: number; y: number; width: number; height: number;
 export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) => void }) {
   const { projects, loading: projectsLoading } = useProjects();
   const { items, loading: itemsLoading } = useItems();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerNode) return;
     const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       setSize({ width, height });
     });
-    observer.observe(containerRef.current);
+    observer.observe(containerNode);
     return () => observer.disconnect();
-  }, []);
+  }, [containerNode]);
 
   useEffect(() => {
     onViewportChange({ ...stagePos, ...size });
@@ -34,7 +34,7 @@ export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) =>
   const visibleProjects = projects.filter((p) => !p.archived);
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
+    <div ref={setContainerNode} style={{ width: '100%', height: '100%' }}>
       <Stage
         width={size.width}
         height={size.height}
