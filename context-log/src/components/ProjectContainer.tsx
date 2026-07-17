@@ -46,6 +46,7 @@ export function ProjectContainer({ project, items }: { project: Project; items: 
         y={project.y}
         draggable
         onDragEnd={(e) => {
+            e.cancelBubble = true;
             updateProjectPosition(project.id, e.target.x(), e.target.y());
         }}
         >
@@ -97,15 +98,23 @@ export function ProjectContainer({ project, items }: { project: Project; items: 
             y={item.y}
             draggable
             dragBoundFunc={function (pos) {
+                const stage = this.getStage();
+                const scale = stage ? stage.scaleX() : 1;
                 const parent = this.getParent();
                 const containerAbs = parent ? parent.getAbsolutePosition() : { x: 0, y: 0 };
+
                 const localX = pos.x - containerAbs.x;
-                const localY = pos.y - containerAbs.y - HEADER_HEIGHT;
-                const clampedX = Math.max(0, Math.min(project.width - CARD_WIDTH, localX));
-                const clampedY = Math.max(0, Math.min(bodyHeight - CARD_HEIGHT, localY));
+                const localY = pos.y - containerAbs.y - HEADER_HEIGHT * scale;
+
+                const maxX = (project.width - CARD_WIDTH) * scale;
+                const maxY = (bodyHeight - CARD_HEIGHT) * scale;
+
+                const clampedX = Math.max(0, Math.min(maxX, localX));
+                const clampedY = Math.max(0, Math.min(maxY, localY));
+
                 return {
-                x: containerAbs.x + clampedX,
-                y: containerAbs.y + HEADER_HEIGHT + clampedY,
+                    x: containerAbs.x + clampedX,
+                    y: containerAbs.y + HEADER_HEIGHT * scale + clampedY,
                 };
             }}
             onDragEnd={(e) => {
