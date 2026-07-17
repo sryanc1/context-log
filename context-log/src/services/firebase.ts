@@ -48,7 +48,7 @@ export async function createItem(item: Omit<Item, "id" | "createdAt" | "updatedA
 }
 
 export async function updateItemStatus(itemId: string, oldStatus: ItemStatus, newStatus: ItemStatus) {
-    const itemRef = doc(db, 'item, itemId');
+    const itemRef = doc(db, 'items', itemId);
     await updateDoc(itemRef, {
         status: newStatus,
         updatedAt: Date.now(),
