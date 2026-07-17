@@ -79,14 +79,12 @@ export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) =>
 
     const orderedProjects = useMemo(() => {
         const visible = projects.filter((p) => !p.archived);
-        const lastActivity = (projectId: string, projectUpdatedAt: number) => {
-        const itemTimestamps = items
-            .filter((i) => i.containerId === projectId)
-            .map((i) => i.updatedAt);
-        return Math.max(projectUpdatedAt, ...itemTimestamps, 0);
+        const lastCardActivity = (projectId: string, projectCreatedAt: number) => {
+            const itemTimestamps = items.filter((i) => i.containerId === projectId).map((i) => i.updatedAt);
+            return itemTimestamps.length ? Math.max(...itemTimestamps) : projectCreatedAt;
         };
         return [...visible].sort(
-        (a, b) => lastActivity(a.id, a.updatedAt) - lastActivity(b.id, b.updatedAt)
+            (a, b) => lastCardActivity(a.id, a.createdAt) - lastCardActivity(b.id, b.createdAt)
         );
     }, [projects, items]);
 
