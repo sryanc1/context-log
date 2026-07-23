@@ -1,36 +1,38 @@
 // src/types/items.ts
 
 export type ItemType =
-    | 'task' | 'issue' | 'decision' 
+    | 'task' | 'issue'
     | 'note' | 'document' | 'meeting' | 'contact' | 'asset';
 
 export type ItemStatus = 'backlog' | 'active' | 'waiting' | 'completed';
 export type Priority = 'low' | 'medium' | 'high';
 
-export interface BaseItem {
+interface ItemCommonFields {
     id: string;
     title: string;
     description: string;
-    type: ItemType;
     status: ItemStatus;
     priority: Priority;
     tags: string[];
-    containerId: string; // which project this card belongs to, if any
-    x: number; // position local to the contatiner
-    y: number; 
+    containerId: string | null;
+    x: number;
+    y: number;
     createdAt: number;
     updatedAt: number;
 }
 
-// Type-specific extension - same pattern as cameraPin / TaskPin split
-export interface DecisionItem extends BaseItem {
-    type: 'decision';
-    reason: string;
-    inpact: string;
+export interface BaseItem extends ItemCommonFields {
+    type: ItemType;
 }
 
-//Generic Union - extend this as needed - add more types-specific fileds later
+export interface DecisionItem extends ItemCommonFields {
+    type: 'decision';
+    reason: string;
+    impact: string;
+}
+
 export type Item = BaseItem | DecisionItem;
+export type AnyItemType = ItemType | 'decision';
 
 export interface Project {
     id: string;

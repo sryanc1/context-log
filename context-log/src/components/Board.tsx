@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Stage, Layer, Rect } from 'react-konva';
 import type Konva from 'konva';
 import { useProjects } from '../hooks/useProjects';
 import { useItems } from '../hooks/useItems';
 import { ProjectContainer } from './ProjectContainer';
 import { colors } from '../theme';
-
+import { setStageCursor } from '../utils/cursor';
+import { getLastActivity } from '../utils/activity';
 
 export interface Viewport { x: number; y: number; width: number; height: number; scale: number; }
 
@@ -20,6 +21,8 @@ export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) =>
     const [size, setSize] = useState({ width: 0, height: 0 });
     const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
     const [stageScale, setStageScale] = useState(1);
+    const [dotPattern, setDotPattern] = useState<HTMLImageElement | null>(null);
+    const hasCenteredOnLoad = useRef(false);
 
     useEffect(() => {
         if (!containerNode) return;
@@ -35,8 +38,6 @@ export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) =>
         onViewportChange({ ...stagePos, ...size, scale: stageScale });
     }, [stagePos, size, stageScale, onViewportChange]);
 
-    const [dotPattern, setDotPattern] = useState<HTMLImageElement | null>(null);
-
     useEffect(() => {
         const size = 24;
         const canvas = document.createElement('canvas');
@@ -44,10 +45,10 @@ export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) =>
         canvas.height = size;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-            ctx.fillStyle = colors.gridDot;
-            ctx.beginPath();
-            ctx.arc(size / 2, size / 2, 1.4, 0, Math.PI * 2);
-            ctx.fill();
+        ctx.fillStyle = colors.gridDot;
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, 1.4, 0, Math.PI * 2);
+        ctx.fill();
         }
         const img = new window.Image();
         img.onload = () => setDotPattern(img);
@@ -79,14 +80,29 @@ export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) =>
 
     const orderedProjects = useMemo(() => {
         const visible = projects.filter((p) => !p.archived);
-        const lastCardActivity = (projectId: string, projectCreatedAt: number) => {
-            const itemTimestamps = items.filter((i) => i.containerId === projectId).map((i) => i.updatedAt);
-            return itemTimestamps.length ? Math.max(...itemTimestamps) : projectCreatedAt;
-        };
-        return [...visible].sort(
-            (a, b) => lastCardActivity(a.id, a.createdAt) - lastCardActivity(b.id, b.createdAt)
-        );
+        const activityFor = (project: (typeof visible)[number]) =>
+        getLastActivity(items.filter((i) => i.containerId === project.id), project.createdAt);
+        return [...visible].sort((a, b) => activityFor(a) - activityFor(b));
     }, [projects, items]);
+
+    // Center on the most recently active project, once, after data and canvas size are ready
+    useEffect(() => {
+        if (hasCenteredOnLoad.current) return;
+        if (projectsLoading || itemsLoading) return;
+        if (size.width === 0 || size.height === 0) return;
+        if (orderedProjects.length === 0) return;
+
+        const mostRecent = orderedProjects[orderedProjects.length - 1]; // ascending sort — last is most recent
+        const targetWorldX = mostRecent.x + mostRecent.width / 2;
+        const targetWorldY = mostRecent.y + mostRecent.height / 2;
+
+        setStagePos({
+        x: size.width / 2 - targetWorldX * stageScale,
+        y: size.height / 2 - targetWorldY * stageScale,
+        });
+
+        hasCenteredOnLoad.current = true;
+    }, [projectsLoading, itemsLoading, size, orderedProjects, stageScale]);
 
     if (projectsLoading || itemsLoading) {
         return <p>Loading board...</p>;
@@ -94,31 +110,40 @@ export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) =>
 
     return (
         <div ref={setContainerNode} style={{ width: '100%', height: '100%', backgroundColor: colors.canvasBg }}>
-            <Stage
-                width={size.width}
-                height={size.height}
-                x={stagePos.x}
-                y={stagePos.y}
-                scaleX={stageScale}
-                scaleY={stageScale}
-                draggable
-                onDragEnd={(e) => setStagePos({ x: e.target.x(), y: e.target.y() })}
-                onWheel={handleWheel}
-            >
-                <Layer>
-                {dotPattern && (
+        <Stage
+            width={size.width}
+            height={size.height}
+            x={stagePos.x}
+            y={stagePos.y}
+            scaleX={stageScale}
+            scaleY={stageScale}
+            draggable
+            onMouseEnter={(e) => setStageCursor(e, 'grab')}
+            onDragStart={(e) => setStageCursor(e, 'grabbing')}
+            onDragEnd={(e) => {
+            setStageCursor(e, 'grab');
+            setStagePos({ x: e.target.x(), y: e.target.y() });
+            }}
+            onWheel={handleWheel}
+        >
+            <Layer>
+            {dotPattern && (
                 <Rect
-                    x={-10000} y={-10000} width={20000} height={20000}
-                    fillPatternImage={dotPattern}
-                    fillPatternRepeat="repeat"
-                    listening={false}
+                x={-10000} y={-10000} width={20000} height={20000}
+                fillPatternImage={dotPattern}
+                fillPatternRepeat="repeat"
+                listening={false}
                 />
-                )}
-                {orderedProjects.map((project) => (
-                    <ProjectContainer key={project.id} project={project} items={items.filter((i) => i.containerId === project.id)} />
-                ))}
-                </Layer>
-            </Stage>
+            )}
+            {orderedProjects.map((project) => (
+                <ProjectContainer
+                key={project.id}
+                project={project}
+                items={items.filter((item) => item.containerId === project.id)}
+                />
+            ))}
+            </Layer>
+        </Stage>
         </div>
     );
 }

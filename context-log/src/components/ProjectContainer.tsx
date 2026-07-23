@@ -5,6 +5,8 @@ import { colors, statusColors } from '../theme';
 import { formatRelativeTime } from '../utils/time';
 import { AddItemButton } from './AddItemButton';
 import { ArchiveButton } from './ArchiveButton';
+import { setStageCursor } from '../utils/cursor';
+import { getLastActivity } from '../utils/activity';
 
 const HEADER_HEIGHT = 34;
 const STATUSES: ItemStatus[] = ['backlog', 'active', 'waiting', 'completed'];
@@ -23,7 +25,7 @@ export function ProjectContainer({ project, items }: { project: Project; items: 
     const bodyHeight = project.height - HEADER_HEIGHT;
     const bandWidth = project.width / 4;
     const itemTimestamps = items.map((i) => i.updatedAt);
-    const lastActivity = itemTimestamps.length ? Math.max(...itemTimestamps) : project.createdAt;
+    const lastActivity = getLastActivity(items, project.createdAt);
 
     const handleAddItem = async () => {
         const title = window.prompt('New item title:');
@@ -50,8 +52,11 @@ export function ProjectContainer({ project, items }: { project: Project; items: 
             x={project.x}
             y={project.y}
             draggable
+            onMouseEnter={(e) => setStageCursor(e, 'grab')}
+            onDragStart={(e) => { e.cancelBubble = true; setStageCursor(e, 'grabbing'); }}
             onDragEnd={(e) => {
                 e.cancelBubble = true;
+                setStageCursor(e, 'grab');
                 updateProjectPosition(project.id, e.target.x(), e.target.y());
             }}
         >
@@ -107,32 +112,38 @@ export function ProjectContainer({ project, items }: { project: Project; items: 
 
         {/* Cards */}
         {items.map((item) => (
-            <Group
+        <Group
             key={item.id}
             x={item.x} y={item.y}
             draggable
+            onMouseEnter={(e) => setStageCursor(e, 'grab')}
             dragBoundFunc={function (pos) {
-                const stage = this.getStage();
-                const scale = stage ? stage.scaleX() : 1;
-                const parent = this.getParent();
-                const containerAbs = parent ? parent.getAbsolutePosition() : { x: 0, y: 0 };
-                const localX = pos.x - containerAbs.x;
-                const localY = pos.y - containerAbs.y - HEADER_HEIGHT * scale;
-                const maxX = (project.width - CARD_WIDTH) * scale;
-                const maxY = (bodyHeight - CARD_HEIGHT) * scale;
-                const clampedX = Math.max(0, Math.min(maxX, localX));
-                const clampedY = Math.max(0, Math.min(maxY, localY));
-                return { x: containerAbs.x + clampedX, y: containerAbs.y + HEADER_HEIGHT * scale + clampedY };
+            const stage = this.getStage();
+            const scale = stage ? stage.scaleX() : 1;
+            const parent = this.getParent();
+            const containerAbs = parent ? parent.getAbsolutePosition() : { x: 0, y: 0 };
+            const localX = pos.x - containerAbs.x;
+            const localY = pos.y - containerAbs.y - HEADER_HEIGHT * scale;
+            const maxX = (project.width - CARD_WIDTH) * scale;
+            const maxY = (bodyHeight - CARD_HEIGHT) * scale;
+            const clampedX = Math.max(0, Math.min(maxX, localX));
+            const clampedY = Math.max(0, Math.min(maxY, localY));
+            return { x: containerAbs.x + clampedX, y: containerAbs.y + HEADER_HEIGHT * scale + clampedY };
+            }}
+            onDragStart={(e) => {
+            e.cancelBubble = true;
+            setStageCursor(e, 'grabbing');
             }}
             onDragEnd={(e) => {
-                e.cancelBubble = true;
-                const localX = e.target.x();
-                const localY = e.target.y();
-                const newStatus = statusForLocalX(localX, project.width);
-                updateItemPosition(item.id, localX, localY, project.id, project.id);
-                if (newStatus !== item.status) updateItemStatus(item.id, item.status, newStatus);
+            e.cancelBubble = true;
+            setStageCursor(e, 'grab');
+            const localX = e.target.x();
+            const localY = e.target.y();
+            const newStatus = statusForLocalX(localX, project.width);
+            updateItemPosition(item.id, localX, localY, project.id, project.id);
+            if (newStatus !== item.status) updateItemStatus(item.id, item.status, newStatus);
             }}
-            >
+        >
             <Rect
                 width={CARD_WIDTH} height={CARD_HEIGHT} fill="#FFFFFF" stroke={colors.border} strokeWidth={1}
                 cornerRadius={4} shadowColor="#000000" shadowBlur={4} shadowOpacity={0.12} shadowOffset={{ x: 0, y: 1 }}
