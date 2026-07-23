@@ -1,8 +1,10 @@
 import { Group, Rect, Text, Line } from 'react-konva';
 import type { Item, ItemStatus, Project } from '../types/items';
-import { updateProjectPosition, updateItemPosition, updateItemStatus, createItem } from '../services/firebase';
+import { updateProjectPosition, updateItemPosition, updateItemStatus, createItem, archiveProject } from '../services/firebase';
 import { colors, statusColors } from '../theme';
 import { formatRelativeTime } from '../utils/time';
+import { AddItemButton } from './AddItemButton';
+import { ArchiveButton } from './ArchiveButton';
 
 const HEADER_HEIGHT = 34;
 const STATUSES: ItemStatus[] = ['backlog', 'active', 'waiting', 'completed'];
@@ -34,15 +36,24 @@ export function ProjectContainer({ project, items }: { project: Project; items: 
         });
     };
 
+    const handleArchive = async (e: any) => {
+        e.cancelBubble = true;
+        const confirmed = window.confirm(
+            `Archive "${project.title}"? It'll be hidden from the board — we don't have a way to view or restore archived projects yet.`
+        );
+        if (!confirmed) return;
+        await archiveProject(project.id, true);
+    };
+
     return (
         <Group
-        x={project.x}
-        y={project.y}
-        draggable
-        onDragEnd={(e) => {
-            e.cancelBubble = true;
-            updateProjectPosition(project.id, e.target.x(), e.target.y());
-        }}
+            x={project.x}
+            y={project.y}
+            draggable
+            onDragEnd={(e) => {
+                e.cancelBubble = true;
+                updateProjectPosition(project.id, e.target.x(), e.target.y());
+            }}
         >
         {/* Title block header */}
         <Rect width={project.width} height={HEADER_HEIGHT} fill={colors.headerBg} cornerRadius={[6, 6, 0, 0]} />
@@ -51,7 +62,7 @@ export function ProjectContainer({ project, items }: { project: Project; items: 
             x={10} y={HEADER_HEIGHT / 2 - 6}
             fontSize={12} fontStyle="bold" fontFamily="Inter" letterSpacing={0.5}
             fill="#FFFFFF"
-            width={project.width - TIMESTAMP_COL_WIDTH - 30}
+            width={project.width - TIMESTAMP_COL_WIDTH - 60}
             ellipsis wrap="none"
         />
         <Line points={[project.width - TIMESTAMP_COL_WIDTH, 8, project.width - TIMESTAMP_COL_WIDTH, HEADER_HEIGHT - 8]} stroke="#3A4552" strokeWidth={1} />
@@ -61,15 +72,20 @@ export function ProjectContainer({ project, items }: { project: Project; items: 
             fontSize={9} fontFamily="IBM Plex Mono" fill="#A9B4C0" letterSpacing={0.3}
         />
 
-        {/* Add item button */}
-        <Group
-            x={project.width - TIMESTAMP_COL_WIDTH - 24} y={5}
+        <AddItemButton
+            x={project.width - TIMESTAMP_COL_WIDTH - 24}
+            y={5}
+            iconOffsetX={6} 
+            iconOffsetY={3}
             onClick={(e) => { e.cancelBubble = true; handleAddItem(); }}
-            onTap={(e) => { e.cancelBubble = true; handleAddItem(); }}
-        >
-            <Rect width={22} height={22} fill="#ffffff18" cornerRadius={4} />
-            <Text text="+" x={7} y={2} fontSize={15} fill="#FFFFFF" />
-        </Group>
+        />
+        <ArchiveButton
+            x={project.width - TIMESTAMP_COL_WIDTH - 54}
+            y={5}
+            iconOffsetX={7} 
+            iconOffsetY={3}            
+            onClick={handleArchive}
+        />
 
         {/* Body */}
         <Rect y={HEADER_HEIGHT} width={project.width} height={bodyHeight} fill={colors.paper} cornerRadius={[0, 0, 6, 6]} />

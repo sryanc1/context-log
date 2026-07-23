@@ -8,7 +8,7 @@ function App() {
 	const { user, loading, logout } = useAuth();
 	const [creating, setCreating] = useState(false);
 	const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, width: 0, height: 0, scale: 1 });	
-	
+
 	const handelViewportChange = useCallback((v: Viewport) => setViewport(v), []);
 
 	if(loading) {
@@ -24,13 +24,16 @@ function App() {
 	}
 
 	const handleNewProject = async () => {
-		setCreating(true)
+		const title = window.prompt('New project name:');
+		if (!title) return;
+
+		setCreating(true);
 		try {
-		const worldCenterX = (viewport.width / 2 - viewport.x) / viewport.scale;
-		const worldCenterY = (viewport.height / 2 - viewport.y) / viewport.scale;
-		await createProject('New project', worldCenterX, worldCenterY);      
+			const worldCenterX = (viewport.width / 2 - viewport.x) / viewport.scale;
+			const worldCenterY = (viewport.height / 2 - viewport.y) / viewport.scale;
+			await createProject(title, worldCenterX, worldCenterY);
 		} finally {
-		setCreating(false)      
+			setCreating(false);
 		}
 	};
 
