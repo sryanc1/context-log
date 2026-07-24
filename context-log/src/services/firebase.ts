@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import type { Item, ItemStatus, ActivityEntry, Project } from "../types/items";
 import type { ItemFormValues } from "../components/ItemModal";
+import type { ProjectFormValues } from '../components/ProjectModal';
 
 // Populate these from Firebase project setting, same pattern as my other apps
 const firebaseConfig = {
@@ -164,13 +165,14 @@ export function subscribeToProjects(callback: (projects: Project[]) => void) {
     });
 }
 
-export async function createProject(title: string, centerX: number, centerY: number) {
+export async function createProject(values: ProjectFormValues, centerX: number, centerY: number) {
     const width = 480;
     const height = 220;
     const now = Date.now();
     const docRef = await addDoc(projectsCollection, {
-        title,
-        description: '',
+        title: values.title,
+        description: values.description,
+        color: values.color,
         x: centerX - width/2, 
         y: centerY - height/2,
         width,
@@ -180,6 +182,16 @@ export async function createProject(title: string, centerX: number, centerY: num
         updatedAt: now,
     });
     return docRef.id;
+}
+
+export async function updateProject(projectId: string, values: ProjectFormValues) {
+    const projectRef = doc(db, 'projects', projectId);
+    await updateDoc(projectRef, {
+        title: values.title,
+        description: values.description,
+        color: values.color,
+        updatedAt: Date.now(),
+    });
 }
 
 export async function updateProjectPosition(projectId: string, x: number, y: number) {

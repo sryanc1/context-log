@@ -5,7 +5,7 @@ import type { Project } from "../types/items";
 import { projectColors } from "../theme";
 import { getReadableTextColour } from "../utils/contrast";
 
-export interface ProectFormValues {
+export interface ProjectFormValues {
     title: string;
     description: string;
     color: string;
@@ -14,7 +14,7 @@ export interface ProectFormValues {
 interface ProjectModalProps {
     mode: 'create' | 'edit'
     initialProject?: Project;
-    onSave: (values: ProectFormValues) => void;
+    onSave: (values: ProjectFormValues) => void;
     onCancel: () => void;
 }
 

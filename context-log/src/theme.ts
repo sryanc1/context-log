@@ -14,13 +14,16 @@ export const colors = {
     green: '#1F7A52',          // Completed
     slate: '#6B7280',          // Backlog
 
-  // add inside colors = { ... }
     successBg: '#DCF3E6',
     successBgHover: '#C3EAD6',
     successIcon: '#1F7A52',
     dangerBg: '#FBE2E2',
     dangerBgHover: '#F6C6C6',
     dangerIcon: '#B23B3B',
+
+    neutralBg: '#E7E9EC',
+    neutralBgHover: '#D5D9DE',
+    neutralIcon: '#3A4552',
 } as const;
 
 export const statusColors: Record<ItemStatus, string> = {

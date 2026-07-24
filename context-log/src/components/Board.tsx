@@ -16,13 +16,18 @@ type ModalState =
   | { mode: 'edit'; project: Project; item: Item }
   | null;
 
+interface BoardProps {
+    onViewportChange: (v: Viewport) => void;
+    onRequestEditProject: (project: Project) => void;
+}
+
 export interface Viewport { x: number; y: number; width: number; height: number; scale: number; }
 
 const MIN_SCALE = 0.3;
 const MAX_SCALE = 2.5;
 const SCALE_BY = 1.05;
 
-export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) => void }) {
+export function Board({ onViewportChange, onRequestEditProject }: BoardProps) {
     const { projects, loading: projectsLoading } = useProjects();
     const { items, loading: itemsLoading } = useItems();
     const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(null);
@@ -185,6 +190,7 @@ export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) =>
                         items={items.filter((item) => item.containerId === project.id)}
                         onRequestCreate={() => setModalState({ mode: 'create', project })}
                         onRequestEdit={(item) => setModalState({ mode: 'edit', project, item })}
+                        onRequestEditProject={onRequestEditProject}
                     />
                 ))}
                 </Layer>

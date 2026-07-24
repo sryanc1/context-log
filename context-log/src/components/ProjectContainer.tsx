@@ -7,6 +7,8 @@ import { AddItemButton } from './AddItemButton';
 import { ArchiveButton } from './ArchiveButton';
 import { setStageCursor } from '../utils/cursor';
 import { getLastActivity } from '../utils/activity';
+import { EditButton } from './EditButton';
+import { getReadableTextColour } from '../utils/contrast';
 
 const HEADER_HEIGHT = 34;
 const STATUSES: ItemStatus[] = ['backlog', 'active', 'waiting', 'completed'];
@@ -20,6 +22,7 @@ interface ProjectContainerProps {
     items: Item[];
     onRequestCreate: () => void;
     onRequestEdit: (item: Item) => void;
+    onRequestEditProject: (project: Project) => void;
 }
 
 function statusForLocalX(localX: number, containerWidth: number): ItemStatus {
@@ -28,10 +31,12 @@ function statusForLocalX(localX: number, containerWidth: number): ItemStatus {
     return STATUSES[index];
 }
 
-export function ProjectContainer({ project, items, onRequestCreate, onRequestEdit }: ProjectContainerProps) {
+export function ProjectContainer({ project, items, onRequestCreate, onRequestEdit, onRequestEditProject }: ProjectContainerProps) {
     const bodyHeight = project.height - HEADER_HEIGHT;
     const bandWidth = project.width / 4;
     const lastActivity = getLastActivity(items, project.createdAt);
+    const effectiveColor = project.color || colors.headerBg;
+    const headerTextColor = getReadableTextColour(effectiveColor)
 
     const handleArchive = async (e: any) => {
         e.cancelBubble = true;
@@ -61,7 +66,7 @@ export function ProjectContainer({ project, items, onRequestCreate, onRequestEdi
                 text={project.title.toUpperCase()}
                 x={10} y={HEADER_HEIGHT / 2 - 6}
                 fontSize={12} fontStyle="bold" fontFamily="Inter" letterSpacing={0.5}
-                fill="#FFFFFF"
+                fill={headerTextColor}
                 width={project.width - TIMESTAMP_COL_WIDTH - 60}
                 ellipsis wrap="none"
             />
@@ -69,7 +74,7 @@ export function ProjectContainer({ project, items, onRequestCreate, onRequestEdi
             <Text
                 text={`UPD ${formatRelativeTime(lastActivity)}`}
                 x={project.width - TIMESTAMP_COL_WIDTH + 8} y={HEADER_HEIGHT / 2 - 5}
-                fontSize={9} fontFamily="IBM Plex Mono" fill="#A9B4C0" letterSpacing={0.3}
+                fontSize={9} fontFamily="IBM Plex Mono" fill={headerTextColor} opacity={0.65} letterSpacing={0.3}
             />
 
             <AddItemButton
@@ -84,6 +89,12 @@ export function ProjectContainer({ project, items, onRequestCreate, onRequestEdi
                 iconOffsetX={7} 
                 iconOffsetY={3}            
                 onClick={handleArchive}
+            />
+
+            <EditButton
+                x={project.width - TIMESTAMP_COL_WIDTH - 84}
+                y={5}
+                onClick={(e) => { e.cancelBubble = true; onRequestEditProject(project); }}
             />
 
             {/* Body */}
@@ -102,7 +113,7 @@ export function ProjectContainer({ project, items, onRequestCreate, onRequestEdi
             ))}
 
             {/* Outer border */}
-            <Rect width={project.width} height={project.height} stroke={colors.border} strokeWidth={1} cornerRadius={6} listening={false} />
+            <Rect width={project.width} height={project.height} stroke={effectiveColor} strokeWidth={1.5} cornerRadius={6} listening={false} />
 
             {/* Cards */}
             {items.map((item) => (

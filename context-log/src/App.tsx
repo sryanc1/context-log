@@ -1,60 +1,64 @@
 import { useCallback, useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { Login } from './components/Login';
-import {Board, type Viewport} from './components/Board';
-import { createProject } from './services/firebase';
+import { Board, type Viewport } from './components/Board';
+import { ProjectModal, type ProjectFormValues } from './components/ProjectModal';
+import { createProject, updateProject } from './services/firebase';
+import type { Project } from './types/items';
+
+type ProjectModalState = { mode: 'create' } | { mode: 'edit'; project: Project } | null;
 
 function App() {
-	const { user, loading, logout } = useAuth();
-	const [creating, setCreating] = useState(false);
-	const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, width: 0, height: 0, scale: 1 });	
+  const { user, loading, logout } = useAuth();
+  const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, width: 0, height: 0, scale: 1 });
+  const [projectModalState, setProjectModalState] = useState<ProjectModalState>(null);
 
-	const handelViewportChange = useCallback((v: Viewport) => setViewport(v), []);
+  const handleViewportChange = useCallback((v: Viewport) => setViewport(v), []);
 
-	if(loading) {
-		return (
-		<div className="loading-screen">
-			<p>Loading...</p>
-		</div>
-		)
-	}
+  if (loading) return <div className="loading-screen"><p>Loading...</p></div>;
+  if (!user) return <Login />;
 
-	if(!user) {
-		return <Login />;
-	}
+  const handleSaveProject = async (values: ProjectFormValues) => {
+    if (projectModalState?.mode === 'edit') {
+      await updateProject(projectModalState.project.id, values);
+    } else {
+      const worldCenterX = (viewport.width / 2 - viewport.x) / viewport.scale;
+      const worldCenterY = (viewport.height / 2 - viewport.y) / viewport.scale;
+      await createProject(values, worldCenterX, worldCenterY);
+    }
+    setProjectModalState(null);
+  };
 
-	const handleNewProject = async () => {
-		const title = window.prompt('New project name:');
-		if (!title) return;
+  return (
+    <div className="app">
+      <header className="topbar">
+        <h1>context-log</h1>
+        <div className="topbar-user">
+          <button onClick={() => setProjectModalState({ mode: 'create' })}>
+            + New project
+          </button>
+          <span>{user.email}</span>
+          <button onClick={logout}>Sign out</button>
+        </div>
+      </header>
 
-		setCreating(true);
-		try {
-			const worldCenterX = (viewport.width / 2 - viewport.x) / viewport.scale;
-			const worldCenterY = (viewport.height / 2 - viewport.y) / viewport.scale;
-			await createProject(title, worldCenterX, worldCenterY);
-		} finally {
-			setCreating(false);
-		}
-	};
+      <main className="app-body">
+        <Board
+          onViewportChange={handleViewportChange}
+          onRequestEditProject={(project) => setProjectModalState({ mode: 'edit', project })}
+        />
+      </main>
 
-	return (
-		<div className="app">
-		<header className="topbar">
-			<h1>context-log</h1>
-			<div className="topbar-user">
-			<button onClick={handleNewProject} disabled={creating}>
-				{creating ? 'Creating...' : '+ New project'}
-			</button>
-			<span>{user.email}</span>
-			<button onClick={logout}>Sign out</button>
-			</div>
-		</header>
-
-		<main className="app-body">
-			<Board onViewportChange={handelViewportChange}/>
-		</main>
-		</div>
-	);
+      {projectModalState && (
+        <ProjectModal
+          mode={projectModalState.mode}
+          initialProject={projectModalState.mode === 'edit' ? projectModalState.project : undefined}
+          onCancel={() => setProjectModalState(null)}
+          onSave={handleSaveProject}
+        />
+      )}
+    </div>
+  );
 }
 
 export default App;
