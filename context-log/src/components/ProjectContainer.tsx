@@ -1,6 +1,6 @@
 import { Group, Rect, Text, Line } from 'react-konva';
 import type { Item, ItemStatus, Project } from '../types/items';
-import { updateProjectPosition, updateItemPosition, updateItemStatus, createItem, archiveProject } from '../services/firebase';
+import { updateProjectPosition, updateItemPosition, updateItemStatus, archiveProject } from '../services/firebase';
 import { colors, statusColors } from '../theme';
 import { formatRelativeTime } from '../utils/time';
 import { AddItemButton } from './AddItemButton';
@@ -31,7 +31,6 @@ function statusForLocalX(localX: number, containerWidth: number): ItemStatus {
 export function ProjectContainer({ project, items, onRequestCreate, onRequestEdit }: ProjectContainerProps) {
     const bodyHeight = project.height - HEADER_HEIGHT;
     const bandWidth = project.width / 4;
-    const itemTimestamps = items.map((i) => i.updatedAt);
     const lastActivity = getLastActivity(items, project.createdAt);
 
     const handleArchive = async (e: any) => {

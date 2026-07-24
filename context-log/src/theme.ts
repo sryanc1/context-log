@@ -29,3 +29,12 @@ export const statusColors: Record<ItemStatus, string> = {
     waiting: colors.amber,
     completed: colors.green,
 };
+
+export const projectColors = [
+    { name: 'Graphite', hex: '#3A4552' },
+    { name: 'Indigo', hex: '#3E4C8C' },
+    { name: 'Teal', hex: '#1F7A78' },
+    { name: 'Plum', hex: '#7A4B7E' },
+    { name: 'Rust', hex: '#9C4A2E' },
+    { name: 'Mustard', hex: '#A8862B' },
+] as const;
