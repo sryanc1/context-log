@@ -39,6 +39,7 @@ export interface Project {
     id: string;
     title: string;
     description: string;
+    color: string;
     x: number; // position local to the outer canvas
     y: number;
     width: number;
