@@ -49,7 +49,7 @@ export function ProjectModal({ mode, initialProject, onSave, onCancel}: ProjectM
 
                 <label className="modal-label">
                     Title
-                    <input className="modal-input" value={title} onChange={(e) => setTitle}/>
+                    <input className="modal-input" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus/>
                 </label>
 
                 <label className="modal-label">
