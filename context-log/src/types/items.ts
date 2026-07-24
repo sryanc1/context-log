@@ -6,6 +6,7 @@ export type ItemType =
 
 export type ItemStatus = 'backlog' | 'active' | 'waiting' | 'completed';
 export type Priority = 'low' | 'medium' | 'high';
+export const STATUSES: ItemStatus[] = ["backlog", "active", "waiting", "completed"]
 
 interface ItemCommonFields {
     id: string;

@@ -8,10 +8,10 @@ import {
     onSnapshot,
     query,
     orderBy,
-    serverTimestamp,
-    Timestamp,
+    deleteDoc
 } from "firebase/firestore";
 import type { Item, ItemStatus, ActivityEntry, Project } from "../types/items";
+import type { ItemFormValues } from "../components/ItemModal";
 
 // Populate these from Firebase project setting, same pattern as my other apps
 const firebaseConfig = {
@@ -85,6 +85,62 @@ export async function updateItemPosition(
     }
 }
 
+export async function updateItem(itemId: string, oldItem: Item, values: ItemFormValues & {x: number; y: number})
+{
+    const itemRef = doc(db, 'items', itemId)
+    const updates: Record<string, unknown> = {
+        title: values.title,
+        description: values.description,
+        type: values.type,
+        priority: values.priority,
+        status: values.status,
+        tags: values.tags,
+        x: values.x,
+        y: values.y,
+        updatedAt: Date.now(),
+    };
+    if (values.type === 'decision') {
+        updates.reason = values.reason ?? '';
+        updates.impact = values.impact ?? '';
+    }
+    await updateDoc(itemRef, updates);
+
+    // One Activity per changed field. x/y excluded -
+    // position is a side-effect of the status change covered below.
+    const fields: Array<{key: keyof Item; label: string; action: ActivityEntry['action']}> = [
+        {key: 'title', label: 'Title', action: 'field_updated'},
+        { key: 'description', label: 'Description', action: 'field_updated' },
+        { key: 'type', label: 'Type', action: 'field_updated' },
+        { key: 'priority', label: 'Priority', action: 'field_updated' },
+        { key: 'status', label: 'Status', action: 'status_changed' },
+    ];
+    for (const {key, label, action} of fields) {
+        const oldValue = String(oldItem[key] ?? '');
+        const newValue = String(updates[key as string] ?? '');
+        if (oldValue !== newValue) {
+            await logActivity(itemId, {
+                action,
+                description: `${label} changed from "${oldValue}" to "${newValue}"`,
+                fieldChanged: key,
+                oldValue,
+                newValue,
+            });            
+        }
+    }
+
+    const oldTags = oldItem.tags.join(', ');
+    const newTags = values.tags.join(', ');
+    if (oldTags !== newTags) {
+        await logActivity(itemId, {
+        action: 'field_updated',
+        description: 'Tags changed',
+        fieldChanged: 'tags',
+        oldValue: oldTags || '(none)',
+        newValue: newTags || '(none)',
+        });
+    }    
+}
+
 // --- Activity (auto-logged, subcollection per item) ---
 
 async function logActivity(
@@ -137,5 +193,7 @@ export async function archiveProject(projectId: string, archived: boolean) {
     await updateDoc(projectRef, { archived, updatedAt: Date.now() });
 }
 
-
+export async function deleteItem(itemId: string) {
+    await deleteDoc(doc(db, 'items', itemId));
+}
 

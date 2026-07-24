@@ -7,6 +7,14 @@ import { ProjectContainer } from './ProjectContainer';
 import { colors } from '../theme';
 import { setStageCursor } from '../utils/cursor';
 import { getLastActivity } from '../utils/activity';
+import { ItemModal, type ItemFormValues } from './ItemModal';
+import { createItem, updateItem, deleteItem } from '../services/firebase';
+import { STATUSES, type Item, type Project } from '../types/items';
+
+type ModalState =
+  | { mode: 'create'; project: Project }
+  | { mode: 'edit'; project: Project; item: Item }
+  | null;
 
 export interface Viewport { x: number; y: number; width: number; height: number; scale: number; }
 
@@ -22,6 +30,7 @@ export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) =>
     const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
     const [stageScale, setStageScale] = useState(1);
     const [dotPattern, setDotPattern] = useState<HTMLImageElement | null>(null);
+    const [modalState, setModalState] = useState<ModalState>(null);
     const hasCenteredOnLoad = useRef(false);
 
     useEffect(() => {
@@ -78,6 +87,40 @@ export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) =>
         });
     };
 
+    const handleSave = async (values: ItemFormValues) => {
+        if (!modalState) return;
+
+        if (modalState.mode === 'create') {
+            const { project } = modalState;
+            const backlogCount = items.filter(
+            (i) => i.containerId === project.id && i.status === 'backlog'
+            ).length;
+            const offset = (backlogCount % 6) * 14;
+            await createItem({
+            ...values,
+            containerId: project.id,
+            x: 8 + offset,
+            y: 8 + offset,
+            });
+        } else {
+            const { item, project } = modalState;
+            let { x, y } = item;
+            if (values.status !== item.status) {
+            const bandWidth = project.width / 4;
+            x = STATUSES.indexOf(values.status) * bandWidth + 8;
+            // y left unchanged — only the status band (x) needs correcting
+            }
+            await updateItem(item.id, item, { ...values, x, y });
+        }
+        setModalState(null);
+    };
+
+    const handleRemove = async () => {
+        if (modalState?.mode !== 'edit') return;
+        await deleteItem(modalState.item.id);
+        setModalState(null);
+    };
+
     const orderedProjects = useMemo(() => {
         const visible = projects.filter((p) => !p.archived);
         const activityFor = (project: (typeof visible)[number]) =>
@@ -110,40 +153,52 @@ export function Board({ onViewportChange }: { onViewportChange: (v: Viewport) =>
 
     return (
         <div ref={setContainerNode} style={{ width: '100%', height: '100%', backgroundColor: colors.canvasBg }}>
-        <Stage
-            width={size.width}
-            height={size.height}
-            x={stagePos.x}
-            y={stagePos.y}
-            scaleX={stageScale}
-            scaleY={stageScale}
-            draggable
-            onMouseEnter={(e) => setStageCursor(e, 'grab')}
-            onDragStart={(e) => setStageCursor(e, 'grabbing')}
-            onDragEnd={(e) => {
-            setStageCursor(e, 'grab');
-            setStagePos({ x: e.target.x(), y: e.target.y() });
-            }}
-            onWheel={handleWheel}
-        >
-            <Layer>
-            {dotPattern && (
-                <Rect
-                x={-10000} y={-10000} width={20000} height={20000}
-                fillPatternImage={dotPattern}
-                fillPatternRepeat="repeat"
-                listening={false}
+            <Stage
+                width={size.width}
+                height={size.height}
+                x={stagePos.x}
+                y={stagePos.y}
+                scaleX={stageScale}
+                scaleY={stageScale}
+                draggable
+                onMouseEnter={(e) => setStageCursor(e, 'grab')}
+                onDragStart={(e) => setStageCursor(e, 'grabbing')}
+                onDragEnd={(e) => {
+                setStageCursor(e, 'grab');
+                setStagePos({ x: e.target.x(), y: e.target.y() });
+                }}
+                onWheel={handleWheel}
+            >
+                <Layer>
+                {dotPattern && (
+                    <Rect
+                    x={-10000} y={-10000} width={20000} height={20000}
+                    fillPatternImage={dotPattern}
+                    fillPatternRepeat="repeat"
+                    listening={false}
+                    />
+                )}
+                {orderedProjects.map((project) => (
+                    <ProjectContainer
+                        key={project.id}
+                        project={project}
+                        items={items.filter((item) => item.containerId === project.id)}
+                        onRequestCreate={() => setModalState({ mode: 'create', project })}
+                        onRequestEdit={(item) => setModalState({ mode: 'edit', project, item })}
+                    />
+                ))}
+                </Layer>
+            </Stage>
+            {modalState && (
+                <ItemModal
+                    mode={modalState.mode}
+                    initialItem={modalState.mode === 'edit' ? modalState.item : undefined}
+                    defaultStatus={modalState.mode === 'create' ? 'backlog' : undefined}
+                    onCancel={() => setModalState(null)}
+                    onSave={handleSave}
+                    onRemove={modalState.mode === 'edit' ? handleRemove : undefined}
                 />
             )}
-            {orderedProjects.map((project) => (
-                <ProjectContainer
-                key={project.id}
-                project={project}
-                items={items.filter((item) => item.containerId === project.id)}
-                />
-            ))}
-            </Layer>
-        </Stage>
         </div>
     );
 }
