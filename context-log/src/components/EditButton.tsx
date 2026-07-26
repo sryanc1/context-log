@@ -12,7 +12,7 @@ interface EditButtonProps {
     iconOffsetY?: number;
 }
 
-export function EditButton({ x, y, onClick, iconOffsetX = 5, iconOffsetY = 3 }: EditButtonProps) {
+export function EditButton({ x, y, onClick, iconOffsetX = 5, iconOffsetY = 5 }: EditButtonProps) {
   const [hovered, setHovered] = useState(false);
 
   return (

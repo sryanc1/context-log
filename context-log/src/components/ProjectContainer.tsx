@@ -61,7 +61,9 @@ export function ProjectContainer({ project, items, onRequestCreate, onRequestEdi
             }}
         >
             {/* Title block header */}
-            <Rect width={project.width} height={HEADER_HEIGHT} fill={colors.headerBg} cornerRadius={[6, 6, 0, 0]} />
+            <Rect width={project.width} height={HEADER_HEIGHT} fill={effectiveColor} cornerRadius={[6, 6, 0, 0]} 
+                shadowColor="#000000" shadowBlur={10} shadowOpacity={0.6} shadowOffset={{ x: 0, y: 1 }}
+            />
             <Text
                 text={project.title.toUpperCase()}
                 x={10} y={HEADER_HEIGHT / 2 - 6}
@@ -74,7 +76,7 @@ export function ProjectContainer({ project, items, onRequestCreate, onRequestEdi
             <Text
                 text={`UPD ${formatRelativeTime(lastActivity)}`}
                 x={project.width - TIMESTAMP_COL_WIDTH + 8} y={HEADER_HEIGHT / 2 - 5}
-                fontSize={9} fontFamily="IBM Plex Mono" fill={headerTextColor} opacity={0.65} letterSpacing={0.3}
+                fontSize={11} fontFamily="IBM Plex Mono" fill={headerTextColor} opacity={0.9} letterSpacing={0.3}
             />
 
             <AddItemButton
@@ -98,7 +100,9 @@ export function ProjectContainer({ project, items, onRequestCreate, onRequestEdi
             />
 
             {/* Body */}
-            <Rect y={HEADER_HEIGHT} width={project.width} height={bodyHeight} fill={colors.paper} cornerRadius={[0, 0, 6, 6]} />
+            <Rect y={HEADER_HEIGHT} width={project.width} height={bodyHeight} fill={colors.paper} cornerRadius={[0, 0, 6, 6]} 
+                shadowColor="#000000" shadowBlur={10} shadowOpacity={0.6} shadowOffset={{ x: 0, y: 1 }}
+            />
 
             {/* Band dividers + labels */}
             {STATUSES.map((status, i) => (
@@ -113,7 +117,7 @@ export function ProjectContainer({ project, items, onRequestCreate, onRequestEdi
             ))}
 
             {/* Outer border */}
-            <Rect width={project.width} height={project.height} stroke={effectiveColor} strokeWidth={1.5} cornerRadius={6} listening={false} />
+            <Rect width={project.width} height={project.height} stroke={effectiveColor} strokeWidth={2} cornerRadius={6} listening={false} />
 
             {/* Cards */}
             {items.map((item) => (
@@ -154,8 +158,8 @@ export function ProjectContainer({ project, items, onRequestCreate, onRequestEdi
                     }}
                 >
                     <Rect
-                        width={CARD_WIDTH} height={CARD_HEIGHT} fill="#FFFFFF" stroke={colors.border} strokeWidth={1}
-                        cornerRadius={4} shadowColor="#000000" shadowBlur={4} shadowOpacity={0.12} shadowOffset={{ x: 0, y: 1 }}
+                        width={CARD_WIDTH} height={CARD_HEIGHT} fill="#f4f3fa" stroke={colors.border} strokeWidth={1}
+                        cornerRadius={4} shadowColor="#000000" shadowBlur={4} shadowOpacity={0.3} shadowOffset={{ x: 0, y: 1 }}
                     />
                     <Rect width={STRIPE_WIDTH} height={CARD_HEIGHT} fill={statusColors[item.status]} cornerRadius={[4, 0, 0, 4]} />
                     <Text
