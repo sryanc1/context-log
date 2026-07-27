@@ -259,3 +259,11 @@ body {
 .modal-swatch-selected {
   border-color: #23282D;
 }
+
+.not-allowed-message {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: #6B7280;
+  max-width: 320px;
+  text-align: center;
+}
