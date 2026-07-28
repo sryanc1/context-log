@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Stage, Layer, Rect } from 'react-konva';
 import type Konva from 'konva';
-import { useProjects } from '../hooks/useProjects';
-import { useItems } from '../hooks/useItems';
 import { ProjectContainer } from './ProjectContainer';
 import { ItemModal, type ItemFormValues } from './ItemModal';
 import { createItem, updateItem, deleteItem } from '../services/firebase';
@@ -12,10 +10,12 @@ import { getLastActivity } from '../utils/activity';
 import { STATUSES, type Item, type Project } from '../types/items';
 
 export interface Viewport { x: number; y: number; width: number; height: number; scale: number; }
+export interface FocusTarget { x: number; y: number; }
 
 const MIN_SCALE = 0.3;
 const MAX_SCALE = 2.5;
 const SCALE_BY = 1.05;
+const PAN_DURATION = 500;
 
 type ModalState =
     | { mode: 'create'; project: Project }
@@ -24,14 +24,16 @@ type ModalState =
 
 interface BoardProps {
     uid: string;
-    interactive: boolean
+    projects: Project[];
+    items: Item[];
+    interactive: boolean;
+    focusTarget: FocusTarget | null;
+    onFocusConsumed: () => void;
     onViewportChange: (v: Viewport) => void;
     onRequestEditProject: (project: Project) => void;
 }
 
-export function Board({ uid, interactive, onViewportChange, onRequestEditProject }: BoardProps) {
-    const { projects, loading: projectsLoading } = useProjects(uid);
-    const { items, loading: itemsLoading } = useItems(uid);
+export function Board({uid, projects, items, interactive, focusTarget, onFocusConsumed, onViewportChange, onRequestEditProject,}: BoardProps) {
     const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(null);
     const [size, setSize] = useState({ width: 0, height: 0 });
     const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
@@ -39,12 +41,13 @@ export function Board({ uid, interactive, onViewportChange, onRequestEditProject
     const [dotPattern, setDotPattern] = useState<HTMLImageElement | null>(null);
     const [modalState, setModalState] = useState<ModalState>(null);
     const hasCenteredOnLoad = useRef(false);
+    const animationFrameRef = useRef<number | null>(null);
 
     useEffect(() => {
         if (!containerNode) return;
-        const observer = new ResizeObserver(([entry]) => {
-        const { width, height } = entry.contentRect;
-        setSize({ width, height });
+            const observer = new ResizeObserver(([entry]) => {
+            const { width, height } = entry.contentRect;
+            setSize({ width, height });
         });
         observer.observe(containerNode);
         return () => observer.disconnect();
@@ -61,10 +64,10 @@ export function Board({ uid, interactive, onViewportChange, onRequestEditProject
         canvas.height = dotSize;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-        ctx.fillStyle = colors.gridDot;
-        ctx.beginPath();
-        ctx.arc(dotSize / 2, dotSize / 2, 1.4, 0, Math.PI * 2);
-        ctx.fill();
+            ctx.fillStyle = colors.gridDot;
+            ctx.beginPath();
+            ctx.arc(dotSize / 2, dotSize / 2, 1.4, 0, Math.PI * 2);
+            ctx.fill();
         }
         const img = new window.Image();
         img.onload = () => setDotPattern(img);
@@ -95,36 +98,64 @@ export function Board({ uid, interactive, onViewportChange, onRequestEditProject
         return [...visible].sort((a, b) => activityFor(a) - activityFor(b));
     }, [projects, items]);
 
+    // Center on the most recently active project, once, on initial load
     useEffect(() => {
         if (hasCenteredOnLoad.current) return;
-        if (projectsLoading || itemsLoading) return;
         if (size.width === 0 || size.height === 0) return;
         if (orderedProjects.length === 0) return;
 
         const mostRecent = orderedProjects[orderedProjects.length - 1];
-        const targetWorldX = mostRecent.x + mostRecent.width / 2;
-        const targetWorldY = mostRecent.y + mostRecent.height / 2;
-
-        setStagePos({ x: size.width / 2 - targetWorldX * stageScale, y: size.height / 2 - targetWorldY * stageScale });
+        setStagePos({
+            x: size.width / 2 - (mostRecent.x + mostRecent.width / 2) * stageScale,
+            y: size.height / 2 - (mostRecent.y + mostRecent.height / 2) * stageScale,
+        });
         hasCenteredOnLoad.current = true;
-    }, [projectsLoading, itemsLoading, size, orderedProjects, stageScale]);
+    }, [size, orderedProjects, stageScale]);
+
+    // Smoothly pan to an on-demand focus target (e.g. restoring a project from Archive)
+    useEffect(() => {
+        if (!focusTarget) return;
+        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+
+        const startX = stagePos.x;
+        const startY = stagePos.y;
+        const endX = size.width / 2 - focusTarget.x * stageScale;
+        const endY = size.height / 2 - focusTarget.y * stageScale;
+        const startTime = performance.now();
+
+        const step = (now: number) => {
+            const elapsed = now - startTime;
+            const t = Math.min(1, elapsed / PAN_DURATION);
+            const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+            setStagePos({ x: startX + (endX - startX) * eased, y: startY + (endY - startY) * eased });
+            if (t < 1) {
+                animationFrameRef.current = requestAnimationFrame(step);
+            }
+        };
+        animationFrameRef.current = requestAnimationFrame(step);
+        onFocusConsumed();
+
+        return () => {
+            if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [focusTarget]);
 
     const handleSave = async (values: ItemFormValues) => {
         if (!modalState) return;
-
         if (modalState.mode === 'create') {
-        const { project } = modalState;
-        const backlogCount = items.filter((i) => i.containerId === project.id && i.status === 'backlog').length;
-        const offset = (backlogCount % 6) * 14;
-        await createItem(uid, { ...values, containerId: project.id, x: 8 + offset, y: 8 + offset });
+            const { project } = modalState;
+            const backlogCount = items.filter((i) => i.containerId === project.id && i.status === 'backlog').length;
+            const offset = (backlogCount % 6) * 14;
+            await createItem(uid, { ...values, containerId: project.id, x: 8 + offset, y: 8 + offset });
         } else {
-        const { item, project } = modalState;
-        let { x, y } = item;
-        if (values.status !== item.status) {
-            const bandWidth = project.width / 4;
-            x = STATUSES.indexOf(values.status) * bandWidth + 8;
-        }
-        await updateItem(uid, item.id, item, { ...values, x, y });
+            const { item, project } = modalState;
+            let { x, y } = item;
+            if (values.status !== item.status) {
+                const bandWidth = project.width / 4;
+                x = STATUSES.indexOf(values.status) * bandWidth + 8;
+            }
+            await updateItem(uid, item.id, item, { ...values, x, y });
         }
         setModalState(null);
     };
@@ -135,10 +166,6 @@ export function Board({ uid, interactive, onViewportChange, onRequestEditProject
         setModalState(null);
     };
 
-    if (projectsLoading || itemsLoading) {
-        return <p>Loading board...</p>;
-    }
-
     return (
         <div ref={setContainerNode} style={{ width: '100%', height: '100%', backgroundColor: colors.canvasBg }}>
         <Stage
@@ -148,10 +175,10 @@ export function Board({ uid, interactive, onViewportChange, onRequestEditProject
             y={stagePos.y}
             scaleX={stageScale}
             scaleY={stageScale}
+            draggable={interactive}
             onMouseEnter={(e) => setStageCursor(e, 'grab')}
             onDragStart={(e) => setStageCursor(e, 'grabbing')}
             onDragEnd={(e) => { setStageCursor(e, 'grab'); setStagePos({ x: e.target.x(), y: e.target.y() }); }}
-            draggable={interactive}
             onWheel={handleWheel}
         >
             <Layer>
@@ -160,13 +187,13 @@ export function Board({ uid, interactive, onViewportChange, onRequestEditProject
             )}
             {orderedProjects.map((project) => (
                 <ProjectContainer
-                    key={project.id}
-                    uid={uid}
-                    project={project}
-                    items={items.filter((item) => item.containerId === project.id)}
-                    onRequestCreate={() => setModalState({ mode: 'create', project })}
-                    onRequestEdit={(item) => setModalState({ mode: 'edit', project, item })}
-                    onRequestEditProject={onRequestEditProject}
+                key={project.id}
+                uid={uid}
+                project={project}
+                items={items.filter((item) => item.containerId === project.id)}
+                onRequestCreate={() => setModalState({ mode: 'create', project })}
+                onRequestEdit={(item) => setModalState({ mode: 'edit', project, item })}
+                onRequestEditProject={onRequestEditProject}
                 />
             ))}
             </Layer>

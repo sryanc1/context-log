@@ -1,10 +1,10 @@
 // src/componenets/NavRail.tsx
 
-import { VIEWS, type ViewID } from "../types/views";
+import { VIEWS, type ViewId } from "../types/views";
 
 interface NavRailProps {
-    activeView: ViewID | null;
-    onSelect: (view: ViewID) => void;
+    activeView: ViewId | null;
+    onSelect: (view: ViewId) => void;
     isAdmin: boolean;
     collapsed: boolean;
     onToggleCollapsed: () => void;
@@ -17,7 +17,7 @@ export function NavRail({activeView, onSelect, isAdmin, collapsed, onToggleColla
         <div className={`nav-rail ${collapsed ? 'nav-rail-collapsed' : ''}`}>
             <button className="nav-rail-toggle" onClick={onToggleCollapsed} aria-label="Toggle navigation">☰</button>
             <button className={`nav-rail-item ${activeView === null ? 'nav-rail-item-active': ''}`} 
-                onClick={() => onSelect(null as unknown as ViewID)}>
+                onClick={() => onSelect(null as unknown as ViewId)}>
                 <span className="nav-rail-icon">▤</span>
                 <span className="nav-rail-label">Board</span>
             </button>

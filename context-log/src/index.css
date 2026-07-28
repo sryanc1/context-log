@@ -395,3 +395,50 @@ body {
   .drawer { width: 100%; }
   .drawer-close-handle { right: 14px; }
 }
+
+.archive-empty {
+  color: #6B7280;
+  font-size: 13px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.archive-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #FFFFFF;
+  border: 1px solid #CBD3DC;
+  border-radius: 6px;
+}
+
+.archive-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.archive-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.archive-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #23282D;
+}
+
+.archive-meta {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: #6B7280;
+  margin-top: 2px;
+}

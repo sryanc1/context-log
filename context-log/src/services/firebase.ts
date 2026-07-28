@@ -71,7 +71,7 @@ export async function createProject(
         y: centerY - height / 2,
         width,
         height,
-        archived: false,
+        archived: false, archivedAt: null,
         createdAt: now,
         updatedAt: now,
     });
@@ -100,7 +100,10 @@ export async function updateProjectSize(uid: string, projectId: string, height: 
 
 export async function archiveProject(uid: string, projectId: string, archived: boolean) {
     const projectRef = doc(db, 'users', uid, 'projects', projectId);
-    await updateDoc(projectRef, { archived, updatedAt: Date.now() });
+    await updateDoc(projectRef, { 
+        archived, 
+        archivedAt: archived ? Date.now() : null,
+        updatedAt: Date.now() });
 }
 
 // ---- Items ----

@@ -47,6 +47,7 @@ export interface Project {
     archived: boolean;
     createdAt: number;
     updatedAt: number;
+    archivedAt: number | null;
 }
 
 export interface Relationship {

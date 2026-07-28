@@ -1,9 +1,9 @@
 // src/types/views.ts
 
-export type ViewID = 'archive' | 'timeline' | 'graph' | 'search' | 'today' | 'admin' 
+export type ViewId = 'archive' | 'timeline' | 'graph' | 'search' | 'today' | 'admin' 
 
 export interface ViewDef {
-    id: ViewID;
+    id: ViewId;
     label: string;
     icon: string;
     adminOnly?: boolean;
