@@ -267,3 +267,131 @@ body {
   max-width: 320px;
   text-align: center;
 }
+
+.app-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.nav-rail {
+  width: 76px;
+  flex-shrink: 0;
+  background: #1D242B;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 8px 0;
+  border-right: 1px solid #2A323C;
+}
+
+.nav-rail-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  font-size: 18px;
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.nav-rail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 4px;
+  background: transparent;
+  border: none;
+  border-left: 3px solid transparent;
+  color: #A9B4C0;
+  cursor: pointer;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.nav-rail-item:hover {
+  background: #242C35;
+}
+
+.nav-rail-item-active {
+  border-left-color: #1D5C8C;
+  color: #FFFFFF;
+  background: #242C35;
+}
+
+.nav-rail-icon {
+  font-size: 17px;
+}
+
+.nav-rail-label {
+  font-size: 9px;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.board-area {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+
+.drawer {
+  position: absolute;
+  inset: 0;
+  width: 75%;
+  background: #EEF1F5;
+  border-right: 1px solid #CBD3DC;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.12);
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.drawer-open {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid #CBD3DC;
+}
+
+.drawer-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #23282D;
+  margin: 0;
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+.drawer-close-handle {
+  position: absolute;
+  top: 18px;
+  right: -22px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #1D242B;
+  color: #FFFFFF;
+  border: 3px solid #EEF1F5;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 720px) {
+  .nav-rail { width: 56px; }
+  .nav-rail-label { display: none; }
+  .drawer { width: 100%; }
+  .drawer-close-handle { right: 14px; }
+}

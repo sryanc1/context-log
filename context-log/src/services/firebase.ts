@@ -37,10 +37,12 @@ const activityCollection = (uid: string, itemId: string) =>
 
 // ---- Allowlist ----
 
-export async function checkAllowlist(email: string): Promise<boolean> {
+export async function checkAllowlist(email: string): Promise<{allowed: boolean; isAdmin: boolean}> {
     const { getDoc, doc: docRef } = await import('firebase/firestore');
     const snap = await getDoc(docRef(db, 'allowlist', email));
-    return snap.exists();
+    if(!snap.exists()) return {allowed: false, isAdmin: false};
+    const data = snap.data();
+    return {allowed: true, isAdmin: data.isAdmin === true};
 }
 
 // ---- Projects ----
