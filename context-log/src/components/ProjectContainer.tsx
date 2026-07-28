@@ -13,7 +13,7 @@ import { EditButton } from './EditButton';
 
 const HEADER_HEIGHT = 34;
 const CARD_WIDTH = 100;
-const CARD_HEIGHT = 36;
+const CARD_HEIGHT = 52;
 const STRIPE_WIDTH = 8;
 const TIMESTAMP_COL_WIDTH = 90;
 const HANDLE_WIDTH = 40;
@@ -21,6 +21,7 @@ const HANDLE_HEIGHT = 8;
 const MIN_HEIGHT_FLOOR = HEADER_HEIGHT + 60;
 const MAX_HEIGHT = 1200;
 const FOOTER_PADDING = 16;
+const HANDLE_INSET = 30; // distance the handle sits above the bottom border, into the body
 
 function statusForLocalX(localX: number, containerWidth: number): ItemStatus {
     const bandWidth = containerWidth / 4;
@@ -64,109 +65,115 @@ export function ProjectContainer({ uid, project, items, onRequestCreate, onReque
 
     return (
         <Group
-        x={project.x}
-        y={project.y}
-        draggable
-        onMouseEnter={(e) => setStageCursor(e, 'grab')}
-        onDragStart={(e) => { e.cancelBubble = true; setStageCursor(e, 'grabbing'); }}
-        onDragEnd={(e) => { e.cancelBubble = true; setStageCursor(e, 'grab'); updateProjectPosition(uid, project.id, e.target.x(), e.target.y()); }}
-        >
-        <Rect width={project.width} height={HEADER_HEIGHT} fill={effectiveColor} cornerRadius={[6, 6, 0, 0]} shadowColor="#000000" shadowBlur={12} shadowOpacity={0.5} shadowOffset={{ x: 0, y: 1 }}/>
-        <Text
-            text={project.title.toUpperCase()}
-            x={10} y={HEADER_HEIGHT / 2 - 6}
-            fontSize={12} fontStyle="bold" fontFamily="Inter" letterSpacing={0.5}
-            fill={headerTextColor}
-            width={project.width - TIMESTAMP_COL_WIDTH - 90}
-            ellipsis wrap="none"
-        />
-        <Line points={[project.width - TIMESTAMP_COL_WIDTH, 8, project.width - TIMESTAMP_COL_WIDTH, HEADER_HEIGHT - 8]} stroke="#3A4552" strokeWidth={1} />
-        <Text
-            text={`UPD ${formatRelativeTime(lastActivity)}`}
-            x={project.width - TIMESTAMP_COL_WIDTH + 8} y={HEADER_HEIGHT / 2 - 5}
-            fontSize={9} fontFamily="IBM Plex Mono" fill={headerTextColor} opacity={0.65} letterSpacing={0.3}
-        />
-
-        <EditButton x={project.width - TIMESTAMP_COL_WIDTH - 84} y={5} onClick={(e) => { e.cancelBubble = true; onRequestEditProject(project); }} />
-        <ArchiveButton x={project.width - TIMESTAMP_COL_WIDTH - 54} y={5} onClick={handleArchive} />
-        <AddItemButton x={project.width - TIMESTAMP_COL_WIDTH - 24} y={5} onClick={(e) => { e.cancelBubble = true; onRequestCreate(); }} />
-
-        <Rect y={HEADER_HEIGHT} width={project.width} height={bodyHeight} fill={colors.paper} cornerRadius={[0, 0, 6, 6]} shadowColor="#000000" shadowBlur={12} shadowOpacity={0.5} shadowOffset={{ x: 0, y: 1 }}/>
-
-        {STATUSES.map((status, i) => (
-            <Group key={status}>
-            {i > 0 && <Rect x={i * bandWidth} y={HEADER_HEIGHT} width={1} height={bodyHeight} fill={colors.border} />}
-            <Text text={status.toUpperCase()} x={i * bandWidth + 6} y={HEADER_HEIGHT + 6} fontSize={8} fontFamily="IBM Plex Mono" letterSpacing={0.8} fill={colors.slate} />
-            </Group>
-        ))}
-
-        <Rect width={project.width} height={liveHeight} stroke={effectiveColor} strokeWidth={2} cornerRadius={6} listening={false} />
-
-        {items.map((item) => (
-            <Group
-            key={item.id}
-            x={item.x} y={item.y}
+            x={project.x}
+            y={project.y}
             draggable
             onMouseEnter={(e) => setStageCursor(e, 'grab')}
-            onClick={(e) => { e.cancelBubble = true; onRequestEdit(item); }}
-            dragBoundFunc={function (pos) {
-                const stage = this.getStage();
-                const scale = stage ? stage.scaleX() : 1;
-                const parent = this.getParent();
-                const containerAbs = parent ? parent.getAbsolutePosition() : { x: 0, y: 0 };
-                const localX = pos.x - containerAbs.x;
-                const localY = pos.y - containerAbs.y - HEADER_HEIGHT * scale;
-                const maxX = (project.width - CARD_WIDTH) * scale;
-                const maxY = (bodyHeight - CARD_HEIGHT) * scale;
-                const clampedX = Math.max(0, Math.min(maxX, localX));
-                const clampedY = Math.max(0, Math.min(maxY, localY));
-                return { x: containerAbs.x + clampedX, y: containerAbs.y + HEADER_HEIGHT * scale + clampedY };
-            }}
             onDragStart={(e) => { e.cancelBubble = true; setStageCursor(e, 'grabbing'); }}
-            onDragEnd={(e) => {
-                e.cancelBubble = true;
-                setStageCursor(e, 'grab');
-                const localX = e.target.x();
-                const localY = e.target.y();
-                const newStatus = statusForLocalX(localX, project.width);
-                updateItemPosition(uid, item.id, localX, localY, project.id, project.id);
-                if (newStatus !== item.status) updateItemStatus(uid, item.id, item.status, newStatus);
-            }}
-            >
-            <Rect width={CARD_WIDTH} height={CARD_HEIGHT} fill="#f6f5ff" stroke={colors.border} strokeWidth={1} cornerRadius={4} shadowColor="#000000" shadowBlur={4} shadowOpacity={0.12} shadowOffset={{ x: 0, y: 1 }} />
-            <Rect width={STRIPE_WIDTH} height={CARD_HEIGHT} fill={statusColors[item.status]} cornerRadius={[4, 0, 0, 4]} />
-            <Text text={item.title} x={STRIPE_WIDTH + 8} y={10} fontSize={10} fontFamily="Inter" fill={colors.ink} width={CARD_WIDTH - STRIPE_WIDTH - 14} wrap="none" ellipsis />
-            </Group>
-        ))}
-
-        <Group
-            x={(project.width - HANDLE_WIDTH) / 2}
-            y={liveHeight - HANDLE_HEIGHT / 2}
-            draggable
-            onMouseEnter={(e) => setStageCursor(e, 'ns-resize')}
-            onMouseLeave={(e) => setStageCursor(e, 'grab')}
-            dragBoundFunc={function (pos) {
-                const stage = this.getStage();
-                const scale = stage ? stage.scaleX() : 1;
-                const parent = this.getParent();
-                const containerAbs = parent ? parent.getAbsolutePosition() : { x: 0, y: 0 };
-                const fixedLocalX = (project.width - HANDLE_WIDTH) / 2;
-                const rawLocalY = (pos.y - containerAbs.y);
-                const clampedLocalY = Math.max(minHeight, Math.min(MAX_HEIGHT, rawLocalY));
-                return { x: containerAbs.x + fixedLocalX * scale, y: containerAbs.y + clampedLocalY * scale };
-            }}
-            onDragStart={(e) => { e.cancelBubble = true; isResizing.current = true; setStageCursor(e, 'ns-resize'); }}
-            onDragMove={(e) => { e.cancelBubble = true; setLiveHeight(e.target.y() + HANDLE_HEIGHT / 2); }}
-            onDragEnd={(e) => {
-                e.cancelBubble = true;
-                isResizing.current = false;
-                const finalHeight = e.target.y() + HANDLE_HEIGHT / 2;
-                setStageCursor(e, 'grab');
-                updateProjectSize(uid, project.id, finalHeight);
-            }}
+            onDragEnd={(e) => { e.cancelBubble = true; setStageCursor(e, 'grab'); updateProjectPosition(uid, project.id, e.target.x(), e.target.y()); }}
         >
-            <Rect width={HANDLE_WIDTH} height={HANDLE_HEIGHT} fill={colors.neutralIcon} opacity={0.5} cornerRadius={4} />
-        </Group>
+            <Rect width={project.width} height={HEADER_HEIGHT} fill={effectiveColor} cornerRadius={[6, 6, 0, 0]} 
+                shadowColor="#000000" shadowBlur={12} shadowOpacity={0.5} shadowOffset={{ x: 0, y: 1 }}/>
+            <Text
+                text={project.title.toUpperCase()}
+                x={10} y={HEADER_HEIGHT / 2 - 6}
+                fontSize={12} fontStyle="bold" fontFamily="Inter" letterSpacing={0.5}
+                fill={headerTextColor}
+                width={project.width - TIMESTAMP_COL_WIDTH - 90}
+                ellipsis wrap="none"
+            />
+            <Line points={[project.width - TIMESTAMP_COL_WIDTH, 8, project.width - TIMESTAMP_COL_WIDTH, HEADER_HEIGHT - 8]} 
+                stroke="#3A4552" strokeWidth={1} />
+            <Text
+                text={`UPD ${formatRelativeTime(lastActivity)}`}
+                x={project.width - TIMESTAMP_COL_WIDTH + 8} y={HEADER_HEIGHT / 2 - 5}
+                fontSize={9} fontFamily="IBM Plex Mono" fill={headerTextColor} opacity={0.65} letterSpacing={0.3}
+            />
+
+            <EditButton x={project.width - TIMESTAMP_COL_WIDTH - 84} y={5} onClick={(e) => { e.cancelBubble = true; onRequestEditProject(project); }} />
+            <ArchiveButton x={project.width - TIMESTAMP_COL_WIDTH - 54} y={5} onClick={handleArchive} />
+            <AddItemButton x={project.width - TIMESTAMP_COL_WIDTH - 24} y={5} onClick={(e) => { e.cancelBubble = true; onRequestCreate(); }} />
+
+            <Rect y={HEADER_HEIGHT} width={project.width} height={bodyHeight} fill={colors.paper} cornerRadius={[0, 0, 6, 6]} 
+                shadowColor="#000000" shadowBlur={12} shadowOpacity={0.5} shadowOffset={{ x: 0, y: 1 }}/>
+
+            {STATUSES.map((status, i) => (
+                <Group key={status}>
+                    {i > 0 && <Rect x={i * bandWidth} y={HEADER_HEIGHT} width={1} height={bodyHeight} fill={colors.border} />}
+                    <Text text={status.toUpperCase()} x={i * bandWidth + 6} y={HEADER_HEIGHT + 6} fontSize={8} fontFamily="IBM Plex Mono" 
+                        letterSpacing={0.8} fill={colors.slate} />
+                </Group>
+            ))}
+
+            <Rect width={project.width} height={liveHeight} stroke={effectiveColor} strokeWidth={2} cornerRadius={6} listening={false} />
+
+            {items.map((item) => (
+                <Group
+                    key={item.id}
+                    x={item.x} y={item.y}
+                    draggable
+                    onMouseEnter={(e) => setStageCursor(e, 'grab')}
+                    onClick={(e) => { e.cancelBubble = true; onRequestEdit(item); }}
+                    dragBoundFunc={function (pos) {
+                        const stage = this.getStage();
+                        const scale = stage ? stage.scaleX() : 1;
+                        const parent = this.getParent();
+                        const containerAbs = parent ? parent.getAbsolutePosition() : { x: 0, y: 0 };
+                        const localX = pos.x - containerAbs.x;
+                        const localY = pos.y - containerAbs.y - HEADER_HEIGHT * scale;
+                        const maxX = (project.width - CARD_WIDTH) * scale;
+                        const maxY = (bodyHeight - CARD_HEIGHT) * scale;
+                        const clampedX = Math.max(0, Math.min(maxX, localX));
+                        const clampedY = Math.max(0, Math.min(maxY, localY));
+                        return { x: containerAbs.x + clampedX, y: containerAbs.y + HEADER_HEIGHT * scale + clampedY };
+                    }}
+                    onDragStart={(e) => { e.cancelBubble = true; setStageCursor(e, 'grabbing'); }}
+                    onDragEnd={(e) => {
+                        e.cancelBubble = true;
+                        setStageCursor(e, 'grab');
+                        const localX = e.target.x();
+                        const localY = e.target.y();
+                        const newStatus = statusForLocalX(localX, project.width);
+                        updateItemPosition(uid, item.id, localX, localY, project.id, project.id);
+                        if (newStatus !== item.status) updateItemStatus(uid, item.id, item.status, newStatus);
+                    }}
+                >
+                    <Rect width={CARD_WIDTH} height={CARD_HEIGHT} fill="#f6f5ff" stroke={colors.border} strokeWidth={1} 
+                        cornerRadius={4} shadowColor="#000000" shadowBlur={4} shadowOpacity={0.12} shadowOffset={{ x: 0, y: 1 }} />
+                    <Rect width={STRIPE_WIDTH} height={CARD_HEIGHT} fill={statusColors[item.status]} cornerRadius={[4, 0, 0, 4]} />
+                    <Text text={item.title} x={STRIPE_WIDTH + 8} y={10} fontSize={10} fontFamily="Inter" fill={colors.ink} 
+                        height={CARD_HEIGHT - 18} width={CARD_WIDTH - STRIPE_WIDTH - 14} wrap="word" ellipsis />
+                </Group>
+            ))}
+
+            <Group
+                x={(project.width - HANDLE_WIDTH) / 2}
+                y={liveHeight - HANDLE_INSET}
+                draggable
+                onMouseEnter={(e) => setStageCursor(e, 'ns-resize')}
+                onMouseLeave={(e) => setStageCursor(e, 'grab')}
+                dragBoundFunc={function (pos) {
+                    const stage = this.getStage();
+                    const scale = stage ? stage.scaleX() : 1;
+                    const parent = this.getParent();
+                    const containerAbs = parent ? parent.getAbsolutePosition() : { x: 0, y: 0 };
+                    const fixedLocalX = (project.width - HANDLE_WIDTH) / 2;
+                    const rawLocalY = (pos.y - containerAbs.y) / scale;
+                    const clampedLocalY = Math.max(minHeight - HANDLE_INSET, Math.min(MAX_HEIGHT - HANDLE_INSET, rawLocalY));
+                    return { x: containerAbs.x + fixedLocalX * scale, y: containerAbs.y + clampedLocalY * scale };
+                }}
+                onDragStart={(e) => { e.cancelBubble = true; isResizing.current = true; setStageCursor(e, 'ns-resize'); }}
+                onDragMove={(e) => { e.cancelBubble = true; setLiveHeight(e.target.y() + HANDLE_INSET); }}
+                onDragEnd={(e) => {
+                    e.cancelBubble = true;
+                    isResizing.current = false;
+                    const finalHeight = e.target.y() + HANDLE_INSET;
+                    setStageCursor(e, 'grab');
+                    updateProjectSize(uid, project.id, finalHeight);
+                }}
+            >
+                <Rect width={HANDLE_WIDTH} height={HANDLE_HEIGHT} fill={colors.neutralIcon} opacity={0.35} cornerRadius={4} />
+            </Group>
         </Group>
     );
 }
