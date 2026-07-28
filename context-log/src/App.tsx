@@ -11,10 +11,8 @@ import { VIEWS, type ViewID } from './types/views';
 
 type ProjectModalState = { mode: 'create' } | { mode: 'edit'; project: Project } | null;
 
-const ADMIN_EMAIL = 'craigpryan80@gmail.com';
-
 function App() {
-	const { user, allowed, loading, logout } = useAuth();
+	const { user, allowed, isAdmin, loading, logout } = useAuth();
 	const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, width: 0, height: 0, scale: 1 });
 	const [projectModalState, setProjectModalState] = useState<ProjectModalState>(null);
 	const [activeView, setActiveView] = useState<ViewID | null >(null);
@@ -36,7 +34,6 @@ function App() {
 	}
 
 	const uid = user.uid;
-	const isAdmin = user.email === ADMIN_EMAIL;
 	const activeViewDef = VIEWS.find((v) => v.id === activeView);
 
 	const handleSaveProject = async (values: ProjectFormValues) => {
