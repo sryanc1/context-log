@@ -4,16 +4,16 @@ import { subscribeToItems } from '../services/firebase';
 import type { Item } from '../types/items';
 
 export function useItems(uid: string) {
-  const [items, setItems] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(true);
+    const [items, setItems] = useState<Item[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const unsubscribe = subscribeToItems(uid, (items) => {
-      setItems(items);
-      setLoading(false);
-    });
-    return unsubscribe;
-  }, [uid]);
+    useEffect(() => {
+        const unsubscribe = subscribeToItems(uid, (items) => {
+        setItems(items);
+        setLoading(false);
+        });
+        return unsubscribe;
+    }, [uid]);
 
-  return { items, loading };
+    return { items, loading };
 }

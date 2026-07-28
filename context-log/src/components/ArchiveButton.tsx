@@ -12,7 +12,7 @@ interface ArchiveButtonProps {
   iconOffsetY?: number;
 }
 
-export function ArchiveButton({ x, y, onClick, iconOffsetX = 4, iconOffsetY = 3 }: ArchiveButtonProps) {
+export function ArchiveButton({ x, y, onClick, iconOffsetX = 8, iconOffsetY = 4 }: ArchiveButtonProps) {
     const [hovered, setHovered] = useState(false);
 
     return (

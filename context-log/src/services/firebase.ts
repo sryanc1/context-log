@@ -58,7 +58,7 @@ export async function createProject(
     centerX: number,
     centerY: number
 ) {
-    const width = 480;
+    const width = 900;
     const height = 220;
     const now = Date.now();
     const docRef = await addDoc(projectsCollection(uid), {
