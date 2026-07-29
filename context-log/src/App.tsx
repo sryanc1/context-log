@@ -10,114 +10,133 @@ import { ArchiveView } from './components/ArchiveView';
 import { ProjectModal, type ProjectFormValues } from './components/ProjectModal';
 import { createProject, updateProject, archiveProject } from './services/firebase';
 import { VIEWS, type ViewId } from './types/views';
+import { useActivityFeed} from './hooks/useActivityFeed';
+import { TimelineView } from './components/TimelineView';
 import type { Project } from './types/items';
+
 
 type ProjectModalState = { mode: 'create' } | { mode: 'edit'; project: Project } | null;
 
 function App() {
-  const { user, allowed, isAdmin, loading, logout } = useAuth();
-  const uid = user?.uid ?? '';
-  const { projects } = useProjects(uid);
-  const { items } = useItems(uid);
+	const { user, allowed, isAdmin, loading, logout } = useAuth();
+	const uid = user?.uid ?? '';
+	const { projects } = useProjects(uid);
+	const { items } = useItems(uid);
+	const {entries: activityEntries} = useActivityFeed(uid);
+	const [requestedItemId, setRequestedItemId] = useState<string | null>(null)
+	const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, width: 0, height: 0, scale: 1 });
+	const [projectModalState, setProjectModalState] = useState<ProjectModalState>(null);
+	const [activeView, setActiveView] = useState<ViewId | null>(null);
+	const [railCollapsed, setRailCollapsed] = useState(false);
+	const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
 
-  const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, width: 0, height: 0, scale: 1 });
-  const [projectModalState, setProjectModalState] = useState<ProjectModalState>(null);
-  const [activeView, setActiveView] = useState<ViewId | null>(null);
-  const [railCollapsed, setRailCollapsed] = useState(false);
-  const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
+	const handleViewportChange = useCallback((v: Viewport) => setViewport(v), []);
 
-  const handleViewportChange = useCallback((v: Viewport) => setViewport(v), []);
+	if (loading) return <div className="loading-screen"><p>Loading...</p></div>;
+	if (!user) return <Login />;
 
-  if (loading) return <div className="loading-screen"><p>Loading...</p></div>;
-  if (!user) return <Login />;
+	if (!allowed) {
+		return (
+		<div className="login-screen">
+			<h1>context-log</h1>
+			<p className="not-allowed-message">{user.email} isn't on the allowlist for this app yet.</p>
+			<button onClick={logout}>Sign out</button>
+		</div>
+		);
+	}
 
-  if (!allowed) {
-    return (
-      <div className="login-screen">
-        <h1>context-log</h1>
-        <p className="not-allowed-message">{user.email} isn't on the allowlist for this app yet.</p>
-        <button onClick={logout}>Sign out</button>
-      </div>
-    );
-  }
+	const activeViewDef = VIEWS.find((v) => v.id === activeView);
+	const archivedProjects = projects.filter((p) => p.archived);
 
-  const activeViewDef = VIEWS.find((v) => v.id === activeView);
-  const archivedProjects = projects.filter((p) => p.archived);
+	const handleSaveProject = async (values: ProjectFormValues) => {
+		if (projectModalState?.mode === 'edit') {
+			await updateProject(uid, projectModalState.project.id, values);
+		} else {
+			const worldCenterX = (viewport.width / 2 - viewport.x) / viewport.scale;
+			const worldCenterY = (viewport.height / 2 - viewport.y) / viewport.scale;
+			await createProject(uid, values, worldCenterX, worldCenterY);
+		}
+		setProjectModalState(null);
+	};
 
-  const handleSaveProject = async (values: ProjectFormValues) => {
-    if (projectModalState?.mode === 'edit') {
-      await updateProject(uid, projectModalState.project.id, values);
-    } else {
-      const worldCenterX = (viewport.width / 2 - viewport.x) / viewport.scale;
-      const worldCenterY = (viewport.height / 2 - viewport.y) / viewport.scale;
-      await createProject(uid, values, worldCenterX, worldCenterY);
-    }
-    setProjectModalState(null);
-  };
+	const handleRestoreProject = async (project: Project) => {
+		await archiveProject(uid, project.id, false);
+		setFocusTarget({ x: project.x + project.width / 2, y: project.y + project.height / 2 });
+		setActiveView(null);
+	};
 
-  const handleRestoreProject = async (project: Project) => {
-    await archiveProject(uid, project.id, false);
-    setFocusTarget({ x: project.x + project.width / 2, y: project.y + project.height / 2 });
-    setActiveView(null);
-  };
+	const handleTimelineSelect = (itemId: string) => {
+		const item = items.find((i) => i.id === itemId)
+		const project = item ? projects.find((p) => p.id === item.containerId) : undefined
+		if (item && project && !project.archived) {
+			setFocusTarget({x: project.x + project.width/2, y: project.y + project.height/2});
+		}
+		setRequestedItemId(itemId);
+		setActiveView(null);
+	}
 
-  return (
-    <div className="app">
-      <header className="topbar">
-        <h1>context-log</h1>
-        <div className="topbar-user">
-          <button onClick={() => setProjectModalState({ mode: 'create' })}>+ New project</button>
-          <span>{user.email}</span>
-          <button onClick={logout}>Sign out</button>
-        </div>
-      </header>
+	return (
+		<div className="app">
+			<header className="topbar">
+				<h1>context-log</h1>
+				<div className="topbar-user">
+					<button onClick={() => setProjectModalState({ mode: 'create' })}>+ New project</button>
+					<span>{user.email}</span>
+					<button onClick={logout}>Sign out</button>
+				</div>
+			</header>
 
-      <div className="app-shell">
-        <NavRail
-          activeView={activeView}
-          onSelect={setActiveView}
-          isAdmin={isAdmin}
-          collapsed={railCollapsed}
-          onToggleCollapsed={() => setRailCollapsed((c) => !c)}
-        />
+			<div className="app-shell">
+				<NavRail
+					activeView={activeView}
+					onSelect={setActiveView}
+					isAdmin={isAdmin}
+					collapsed={railCollapsed}
+					onToggleCollapsed={() => setRailCollapsed((c) => !c)}
+				/>
 
-        <div className="board-area">
-          <Board
-            uid={uid}
-            projects={projects}
-            items={items}
-            interactive={activeView === null}
-            focusTarget={focusTarget}
-            onFocusConsumed={() => setFocusTarget(null)}
-            onViewportChange={handleViewportChange}
-            onRequestEditProject={(project) => setProjectModalState({ mode: 'edit', project })}
-          />
+				<div className="board-area">
+				<Board
+					uid={uid}
+					projects={projects}
+					items={items}
+					interactive={activeView === null}
+					focusTarget={focusTarget}
+					onFocusConsumed={() => setFocusTarget(null)}
+					onViewportChange={handleViewportChange}
+					onRequestEditProject={(project) => setProjectModalState({ mode: 'edit', project })}
+					requestedItemId={requestedItemId}
+					onrequestedItemConsumed={() => setRequestedItemId(null)}
+				/>
 
-          <Drawer
-            isOpen={activeView !== null}
-            title={activeViewDef?.label ?? ''}
-            onClose={() => setActiveView(null)}
-          >
-            {activeView === 'archive' && (
-              <ArchiveView archivedProjects={archivedProjects} items={items} onRestore={handleRestoreProject} />
-            )}
-            {activeView && activeView !== 'archive' && (
-              <p style={{ color: '#6B7280', fontSize: 13 }}>{activeViewDef?.label} view — coming soon.</p>
-            )}
-          </Drawer>
-        </div>
-      </div>
+				<Drawer
+					isOpen={activeView !== null}
+					title={activeViewDef?.label ?? ''}
+					onClose={() => setActiveView(null)}
+				>
+					{activeView === 'archive' && (
+						<ArchiveView archivedProjects={archivedProjects} items={items} onRestore={handleRestoreProject}/>
+					)}
+					{activeView === 'timeline' &&(
+						<TimelineView entries={activityEntries} items={items} projects={projects} onSelectItem={handleTimelineSelect}/>
+					)}
+					{activeView && activeView !== 'archive' && activeView !== 'timeline' && (
+						<p style={{ color: '#6B7280', fontSize: 13 }}>{activeViewDef?.label} view — coming soon.</p>
+					)}
+				</Drawer>
+				</div>
+			</div>
 
-      {projectModalState && (
-        <ProjectModal
-          mode={projectModalState.mode}
-          initialProject={projectModalState.mode === 'edit' ? projectModalState.project : undefined}
-          onCancel={() => setProjectModalState(null)}
-          onSave={handleSaveProject}
-        />
-      )}
-    </div>
-  );
+			{projectModalState && (
+				<ProjectModal
+				mode={projectModalState.mode}
+				initialProject={projectModalState.mode === 'edit' ? projectModalState.project : undefined}
+				onCancel={() => setProjectModalState(null)}
+				onSave={handleSaveProject}
+				/>
+			)}
+		</div>
+	);
 }
 
 export default App;

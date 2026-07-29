@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Group, Rect, Text, Line } from 'react-konva';
+import { Group, Rect, Text, Line, Circle } from 'react-konva';
 import { STATUSES, type Item, type ItemStatus, type Project } from '../types/items';
 import { updateProjectPosition, updateItemPosition, updateItemStatus, updateProjectSize, archiveProject } from '../services/firebase';
 import { colors, statusColors } from '../theme';
@@ -10,6 +10,7 @@ import { setStageCursor } from '../utils/cursor';
 import { AddItemButton } from './AddItemButton';
 import { ArchiveButton } from './ArchiveButton';
 import { EditButton } from './EditButton';
+import { getDueUrgency } from '../utils/dueDate';
 
 const HEADER_HEIGHT = 34;
 const CARD_WIDTH = 100;
@@ -143,6 +144,14 @@ export function ProjectContainer({ uid, project, items, onRequestCreate, onReque
                     <Rect width={STRIPE_WIDTH} height={CARD_HEIGHT} fill={statusColors[item.status]} cornerRadius={[4, 0, 0, 4]} />
                     <Text text={item.title} x={STRIPE_WIDTH + 8} y={10} fontSize={10} fontFamily="Inter" fill={colors.ink} 
                         height={CARD_HEIGHT - 18} width={CARD_WIDTH - STRIPE_WIDTH - 14} wrap="word" ellipsis />
+                    {getDueUrgency(item.dueDate) && (
+                        <Circle
+                            x={CARD_WIDTH - 8}
+                            y={8}
+                            radius={4}
+                            fill={getDueUrgency(item.dueDate) === 'overdue' ? colors.dangerIcon : colors.amber}
+                        />
+                    )}
                 </Group>
             ))}
 

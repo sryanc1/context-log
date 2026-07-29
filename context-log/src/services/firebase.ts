@@ -4,6 +4,7 @@ import { initializeApp } from 'firebase/app';
 import {
     getFirestore,
     collection,
+    collectionGroup,
     doc,
     addDoc,
     updateDoc,
@@ -11,8 +12,9 @@ import {
     onSnapshot,
     query,
     orderBy,
+    limit,
 } from 'firebase/firestore';
-import type { Item, ItemStatus, ActivityEntry, Project } from '../types/items';
+import type { Item, ItemStatus, ActivityEntry, ActivityFeedEntry, Project } from '../types/items';
 import type { ItemFormValues } from '../components/ItemModal';
 import type { ProjectFormValues } from '../components/ProjectModal';
 
@@ -34,6 +36,10 @@ const projectsCollection = (uid: string) => collection(db, 'users', uid, 'projec
 const itemsCollection = (uid: string) => collection(db, 'users', uid, 'items');
 const activityCollection = (uid: string, itemId: string) =>
     collection(db, 'users', uid, 'items', itemId, 'activity');
+const formatForLog = (key: string, value: unknown) =>
+  key === 'dueDate' && typeof value === 'number'
+    ? new Date(value).toLocaleDateString()
+    : String(value ?? '');
 
 // ---- Allowlist ----
 
@@ -186,6 +192,7 @@ export async function updateItem(
         x: values.x,
         y: values.y,
         updatedAt: Date.now(),
+        dueDate: values.dueDate,
     };
     if (values.type === 'decision') {
         updates.reason = values.reason ?? '';
@@ -199,10 +206,11 @@ export async function updateItem(
         { key: 'type', label: 'Type', action: 'field_updated' },
         { key: 'priority', label: 'Priority', action: 'field_updated' },
         { key: 'status', label: 'Status', action: 'status_changed' },
+        { key: 'dueDate', label: 'Due Date', action: 'field_updated'},
     ];
     for (const { key, label, action } of fields) {
-        const oldValue = String(oldItem[key] ?? '');
-        const newValue = String(updates[key as string] ?? '');
+        const oldValue = formatForLog(key, oldItem[key]);
+        const newValue = formatForLog(key, updates[key as string]);
         if (oldValue !== newValue) {
         await logActivity(uid, itemId, {
             action,
@@ -241,5 +249,18 @@ async function logActivity(
     await addDoc(activityCollection(uid, itemId), {
         ...entry,
         createdAt: Date.now(),
+    });
+}
+
+export function subscribeToRecentActivity(uid: string, callback: (entries: ActivityFeedEntry []) => void ) {
+    const q = query(collectionGroup(db, 'activity'), orderBy('createdAt', 'desc'), limit(200));
+    return onSnapshot(q, (snapshot) => {
+        const entries = snapshot.docs
+            .filter((d) => d.ref.path.startsWith(`user/${uid}/`))
+            .map((d) => {
+                const itemId = d.ref.parent.parent?.id ?? '';
+                return { id: d.id, itemId, ...d.data()} as ActivityFeedEntry;
+            });
+        callback(entries)
     });
 }

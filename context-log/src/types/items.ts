@@ -1,7 +1,7 @@
 // src/types/items.ts
 
 export type ItemType =
-    | 'task' | 'issue'
+    | 'task' | 'issue' | 'decision'
     | 'note' | 'document' | 'meeting' | 'contact' | 'asset';
 
 export type ItemStatus = 'backlog' | 'active' | 'waiting' | 'completed';
@@ -20,10 +20,11 @@ interface ItemCommonFields {
     y: number;
     createdAt: number;
     updatedAt: number;
+    dueDate: number | null;
 }
 
 export interface BaseItem extends ItemCommonFields {
-    type: ItemType;
+    type: Exclude<ItemType, 'decision'>;
 }
 
 export interface DecisionItem extends ItemCommonFields {
@@ -68,3 +69,6 @@ export interface ActivityEntry {
     createdAt: number;
 }
 
+export interface ActivityFeedEntry extends ActivityEntry {
+    itemId: string;
+}

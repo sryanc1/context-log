@@ -28,12 +28,14 @@ interface BoardProps {
     items: Item[];
     interactive: boolean;
     focusTarget: FocusTarget | null;
+    requestedItemId: string | null;
     onFocusConsumed: () => void;
     onViewportChange: (v: Viewport) => void;
     onRequestEditProject: (project: Project) => void;
+    onrequestedItemConsumed: () => void;
 }
 
-export function Board({uid, projects, items, interactive, focusTarget, onFocusConsumed, onViewportChange, onRequestEditProject,}: BoardProps) {
+export function Board({uid, projects, items, interactive, focusTarget, requestedItemId, onrequestedItemConsumed, onFocusConsumed, onViewportChange, onRequestEditProject,}: BoardProps) {
     const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(null);
     const [size, setSize] = useState({ width: 0, height: 0 });
     const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
@@ -73,6 +75,16 @@ export function Board({uid, projects, items, interactive, focusTarget, onFocusCo
         img.onload = () => setDotPattern(img);
         img.src = canvas.toDataURL();
     }, []);
+
+    useEffect(() => {
+        if (!requestedItemId) return;
+        const item = items.find((i) => i.id === requestedItemId);
+        const project = item ? projects.find((p) => p.id === item.containerId) : undefined;
+        if (item && project) {
+            setModalState({mode: 'edit', project, item});
+        }
+        onrequestedItemConsumed();
+    }, [requestedItemId, items, projects, onrequestedItemConsumed])
 
     const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
         if (!interactive) return;

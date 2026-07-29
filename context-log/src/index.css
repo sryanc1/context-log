@@ -412,7 +412,7 @@ body {
   gap: 10px;
 }
 
-.archive-row {
+/* .archive-row {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -420,7 +420,7 @@ body {
   background: #FFFFFF;
   border: 1px solid #CBD3DC;
   border-radius: 6px;
-}
+} */
 
 .archive-swatch {
   width: 14px;
@@ -498,5 +498,142 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.modal-textarea-description {
+  min-height: 200px;
+}
+
+.view-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: #23282D;
+  margin: 0 0 12px;
+}
+
+.view-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.view-chip {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: #EEF1F5;
+  color: #6B7280;
+}
+
+.view-chip-overdue {
+  background: #FBE2E2;
+  color: #B23B3B;
+}
+
+.view-chip-soon {
+  background: #FAEEDA;
+  color: #854F0B;
+}
+
+.view-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.view-tag {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 10px;
+  background: #FFFFFF;
+  border: 1px solid #CBD3DC;
+  color: #23282D;
+}
+
+.view-body {
+  border-top: 1px solid #CBD3DC;
+  padding-top: 14px;
+}
+
+.view-description {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #23282D;
+  margin: 0 0 14px;
+}
+
+.view-section-label {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6B7280;
+  margin-bottom: 4px;
+}
+
+.timeline-group {
+  margin-bottom: 20px;
+}
+
+.timeline-day-heading {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6B7280;
+  margin-bottom: 8px;
+}
+
+.timeline-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 10px;
+  background: #FFFFFF;
+  border: 1px solid #CBD3DC;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.timeline-row:hover {
+  background: #EEF1F5;
+}
+
+.timeline-row:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.timeline-row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-row-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #23282D;
+}
+
+.timeline-row-desc {
+  font-size: 12px;
+  color: #6B7280;
+  margin-top: 2px;
+}
+
+.timeline-row-time {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: #A9B4C0;
   flex-shrink: 0;
 }
