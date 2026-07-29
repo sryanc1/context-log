@@ -8,9 +8,14 @@ export function useProjects(uid: string) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if(!uid) {
+            setProjects([]);
+            setLoading(true);
+            return;
+        }
         const unsubscribe = subscribeToProjects(uid, (projects) => {
-        setProjects(projects);
-        setLoading(false);
+            setProjects(projects);
+            setLoading(false);
         });
         return unsubscribe;
     }, [uid]);

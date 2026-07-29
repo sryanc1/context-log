@@ -99,7 +99,7 @@ function App() {
             onClose={() => setActiveView(null)}
           >
             {activeView === 'archive' && (
-              <ArchiveView archivedProjects={archivedProjects} onRestore={handleRestoreProject} />
+              <ArchiveView archivedProjects={archivedProjects} items={items} onRestore={handleRestoreProject} />
             )}
             {activeView && activeView !== 'archive' && (
               <p style={{ color: '#6B7280', fontSize: 13 }}>{activeViewDef?.label} view — coming soon.</p>

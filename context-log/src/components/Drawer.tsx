@@ -11,8 +11,8 @@ interface DrawerProps {
 
 export function Drawer({isOpen, title, onClose, children} : DrawerProps) {
     return (
-        <div className={`draw ${isOpen ? 'draw-open' : ''}`} aria-hidden={!isOpen}>
-            <div className="draw-header">
+        <div className={`drawer ${isOpen ? 'drawer-open' : ''}`} aria-hidden={!isOpen}>
+            <div className="drawer-header">
                 <h2 className="drawer-title">{title}</h2>
             </div>
             <div className="drawer-body">{children}</div>

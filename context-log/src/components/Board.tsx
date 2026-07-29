@@ -130,10 +130,11 @@ export function Board({uid, projects, items, interactive, focusTarget, onFocusCo
             setStagePos({ x: startX + (endX - startX) * eased, y: startY + (endY - startY) * eased });
             if (t < 1) {
                 animationFrameRef.current = requestAnimationFrame(step);
+            } else {
+                onFocusConsumed();
             }
         };
         animationFrameRef.current = requestAnimationFrame(step);
-        onFocusConsumed();
 
         return () => {
             if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);

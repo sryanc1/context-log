@@ -8,9 +8,14 @@ export function useItems(uid: string) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if(!uid) {
+            setItems([]);
+            setLoading(true);
+            return;
+        }
         const unsubscribe = subscribeToItems(uid, (items) => {
-        setItems(items);
-        setLoading(false);
+            setItems(items);
+            setLoading(false);
         });
         return unsubscribe;
     }, [uid]);
