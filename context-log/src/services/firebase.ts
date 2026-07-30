@@ -13,10 +13,14 @@ import {
     query,
     orderBy,
     limit,
+    where,
+    setDoc,
+    getDocs,
 } from 'firebase/firestore';
 import type { Item, ItemStatus, ActivityEntry, ActivityFeedEntry, Project } from '../types/items';
 import type { ItemFormValues } from '../components/ItemModal';
 import type { ProjectFormValues } from '../components/ProjectModal';
+import type { AllowlistEntry } from '../types/items';
 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -30,7 +34,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 
-// ---- Path helpers — the single source of truth for the nested structure ----
+// ---- Path helpers - the single source of truth for the nested structure ----
 
 const projectsCollection = (uid: string) => collection(db, 'users', uid, 'projects');
 const itemsCollection = (uid: string) => collection(db, 'users', uid, 'items');
@@ -41,15 +45,46 @@ const formatForLog = (key: string, value: unknown) =>
     ? new Date(value).toLocaleDateString()
     : String(value ?? '');
 
+
 // ---- Allowlist ----
+
+const allowlistCollection = collection(db, 'allowlist');
+const normalizeEmail = (email: string) => email.trim().toLocaleLowerCase();
+
+export function subscribeToAllowlist(callback: (entries: AllowlistEntry[]) => void) {
+    return onSnapshot(allowlistCollection, (snapshot) => {
+        const entries = snapshot.docs.map((d) => ({email: d.id, ...d.data()}) as AllowlistEntry);
+        callback(entries);
+    });
+}
+
+export async  function addAllowListEntry(email: string, notes: string, isAdmin: boolean){
+    const normalized = normalizeEmail(email);
+    await setDoc(doc(db, 'allowlist', normalized), {
+        addedAt: Date.now(),
+        source: 'manual',
+        notes,
+        isAdmin,
+    });
+}
+    
+export async function removeAllowlistEnry(email: string) {
+    await deleteDoc(doc(db, 'allowlist', email));   
+}
+
+export async function setAllowlistItem(email: string, isAdmin: boolean) {
+    await updateDoc(doc(db, 'allowlist', email), {isAdmin});
+}
 
 export async function checkAllowlist(email: string): Promise<{allowed: boolean; isAdmin: boolean}> {
     const { getDoc, doc: docRef } = await import('firebase/firestore');
-    const snap = await getDoc(docRef(db, 'allowlist', email));
+    const snap = await getDoc(docRef(db, 'allowlist', email.trim().toLocaleLowerCase()));
     if(!snap.exists()) return {allowed: false, isAdmin: false};
     const data = snap.data();
     return {allowed: true, isAdmin: data.isAdmin === true};
 }
+
+
 
 // ---- Projects ----
 
@@ -244,19 +279,24 @@ export async function deleteItem(uid: string, itemId: string) {
 async function logActivity(
     uid: string,
     itemId: string,
-    entry: Omit<ActivityEntry, 'id' | 'createdAt'>
+    entry: Omit<ActivityEntry, 'id' | 'createdAt' | 'uid'>
 ) {
     await addDoc(activityCollection(uid, itemId), {
         ...entry,
+        uid,
         createdAt: Date.now(),
     });
 }
 
 export function subscribeToRecentActivity(uid: string, callback: (entries: ActivityFeedEntry []) => void ) {
-    const q = query(collectionGroup(db, 'activity'), orderBy('createdAt', 'desc'), limit(200));
+    const q = query(
+        collectionGroup(db, 'activity'), 
+        where('uid', '==', uid),
+        orderBy('createdAt', 'desc'), 
+        limit(200)
+    );
     return onSnapshot(q, (snapshot) => {
-        const entries = snapshot.docs
-            .filter((d) => d.ref.path.startsWith(`user/${uid}/`))
+        const entries = snapshot.docs            
             .map((d) => {
                 const itemId = d.ref.parent.parent?.id ?? '';
                 return { id: d.id, itemId, ...d.data()} as ActivityFeedEntry;

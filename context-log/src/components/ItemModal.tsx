@@ -126,47 +126,49 @@ export function ItemModal({ mode, initialItem, defaultStatus, onSave, onCancel, 
 		return (
 		<div className="modal-backdrop" onClick={onCancel}>
 			<div className="modal-card" onClick={(e) => e.stopPropagation()}>
-				<h2 className="view-title">{initialItem.title}</h2>
+				<div className="modal-card-scroll">
+					<button className="modal-close-handle" onClick={onCancel} aria-label="Close">✕</button>
+					<h2 className="view-title">{initialItem.title}</h2>
 
-				<div className="view-chip-row">
-					<span className="view-chip">{initialItem.type}</span>
-					<span className="view-chip">{initialItem.priority} priority</span>
-					<span className="view-chip">{initialItem.status}</span>
-					{initialItem.dueDate && (
-					<span className={`view-chip ${urgency ? `view-chip-${urgency}` : ''}`}>
-						Due {new Date(initialItem.dueDate).toLocaleDateString()}
-					</span>
-					)}
-				</div>
-
-				{initialItem.tags.length > 0 && (
-					<div className="view-tag-row">
-						{initialItem.tags.map((tag) => <span key={tag} className="view-tag">{tag}</span>)}
+					<div className="view-chip-row">
+						<span className="view-chip">{initialItem.type}</span>
+						<span className="view-chip">{initialItem.priority} priority</span>
+						<span className="view-chip">{initialItem.status}</span>
+						{initialItem.dueDate && (
+							<span className={`view-chip ${urgency ? `view-chip-${urgency}` : ''}`}>
+								Due {new Date(initialItem.dueDate).toLocaleDateString()}
+							</span>
+						)}
 					</div>
-				)}
 
-				<div className="view-body">
-					<p className="view-description">{initialItem.description || 'No description yet.'}</p>
-
-					{initialItem.type === 'decision' && (
-					<>
-						<div className="view-section-label">Reason</div>
-						<p className="view-description">{initialItem.reason || '—'}</p>
-						<div className="view-section-label">Impact</div>
-						<p className="view-description">{initialItem.impact || '—'}</p>
-					</>
+					{initialItem.tags.length > 0 && (
+						<div className="view-tag-row">
+							{initialItem.tags.map((tag) => <span key={tag} className="view-tag">{tag}</span>)}
+						</div>
 					)}
-				</div>
 
-				<div className="modal-footer">
-					{onRemove && (
-					<button className="modal-button modal-button-danger" onClick={handleRemove}>Remove</button>
-					)}
-					<div className="modal-footer-right">
-						<button className="modal-button modal-button-ghost" onClick={onCancel}>Close</button>
-						<button className="modal-button modal-button-primary" onClick={() => setIsEditing(true)}>Edit</button>
+					<div className="view-body">
+						<p className="view-description">{initialItem.description || 'No description yet.'}</p>
+
+						{initialItem.type === 'decision' && (
+							<>
+								<div className="view-section-label">Reason</div>
+								<p className="view-description">{initialItem.reason || '—'}</p>
+								<div className="view-section-label">Impact</div>
+								<p className="view-description">{initialItem.impact || '—'}</p>
+							</>
+						)}
 					</div>
-				</div>
+
+					<div className="modal-footer">
+						{onRemove && (
+							<button className="modal-button modal-button-danger" onClick={handleRemove}>Remove</button>
+						)}
+						<div className="modal-footer-right">
+							<button className="modal-button modal-button-primary" onClick={() => setIsEditing(true)}>Edit</button>
+						</div>
+					</div>
+				</div>		
 			</div>
 		</div>
 		);
@@ -176,78 +178,81 @@ export function ItemModal({ mode, initialItem, defaultStatus, onSave, onCancel, 
 	return (
 		<div className="modal-backdrop" onClick={handleEditCancel}>
 			<div className="modal-card" onClick={(e) => e.stopPropagation()}>
-				<h2 className="modal-title">{mode === 'create' ? 'New item' : 'Edit item'}</h2>
+				<div className="modal-card-scroll">
+					<button className="modal-close-handle" onClick={handleEditCancel} aria-label="Close">✕</button>
+					<h2 className="modal-title">{mode === 'create' ? 'New item' : 'Edit item'}</h2>
 
-				<label className="modal-label">
-				Title
-				<input className="modal-input" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus={mode === 'create'} />
-				</label>
-
-				<div className="modal-row">
-				<label className="modal-label">
-					Type
-					<select className="modal-input" value={type} onChange={(e) => setType(e.target.value as ItemType)}>
-					{ITEM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-					</select>
-				</label>
-				<label className="modal-label">
-					Priority
-					<select className="modal-input" value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
-					{PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
-					</select>
-				</label>
-				<label className="modal-label">
-					Status
-					<select className="modal-input" value={status} onChange={(e) => setStatus(e.target.value as ItemStatus)}>
-					{STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-					</select>
-				</label>
-				</div>
-
-				<div className="modal-row">
-				<label className="modal-label">
-					Tags <span className="modal-hint">comma separated</span>
-					<input className="modal-input" value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} />
-				</label>
-				<label className="modal-label">
-					Due date <span className="modal-hint">optional</span>
-					<input type="date" className="modal-input" value={dueDateInput} onChange={(e) => setDueDateInput(e.target.value)} />
-				</label>
-				</div>
-
-				<label className="modal-label">
-				Description
-				<textarea
-					ref={descriptionRef}
-					className="modal-input modal-textarea modal-textarea-description"
-					value={description}
-					onChange={(e) => setDescription(e.target.value)}
-				/>
-				</label>
-
-				{type === 'decision' && (
-				<>
 					<label className="modal-label">
-					Reason
-					<textarea className="modal-input modal-textarea" value={reason} onChange={(e) => setReason(e.target.value)} />
+						Title
+						<input className="modal-input" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus={mode === 'create'} />
 					</label>
-					<label className="modal-label">
-					Impact
-					<textarea className="modal-input modal-textarea" value={impact} onChange={(e) => setImpact(e.target.value)} />
-					</label>
-				</>
-				)}
 
-				<div className="modal-footer">
-				{mode === 'edit' && onRemove && (
-					<button className="modal-button modal-button-danger" onClick={handleRemove}>Remove</button>
-				)}
-				<div className="modal-footer-right">
-					<button className="modal-button modal-button-ghost" onClick={handleEditCancel}>Cancel</button>
-					<button className="modal-button modal-button-primary" onClick={handleSave} disabled={!canSave}>Save</button>
+					<div className="modal-row">
+						<label className="modal-label">
+							Type
+							<select className="modal-input" value={type} onChange={(e) => setType(e.target.value as ItemType)}>
+							{ITEM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+							</select>
+						</label>
+						<label className="modal-label">
+							Priority
+							<select className="modal-input" value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
+							{PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
+							</select>
+						</label>
+						<label className="modal-label">
+							Status
+							<select className="modal-input" value={status} onChange={(e) => setStatus(e.target.value as ItemStatus)}>
+							{STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+							</select>
+						</label>
+					</div>
+
+					<div className="modal-row">
+						<label className="modal-label">
+							Tags <span className="modal-hint">comma separated</span>
+							<input className="modal-input" value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} />
+						</label>
+						<label className="modal-label">
+							Due date <span className="modal-hint">optional</span>
+							<input type="date" className="modal-input" value={dueDateInput} onChange={(e) => setDueDateInput(e.target.value)} />
+						</label>
+					</div>
+
+					<label className="modal-label">
+						Description
+						<textarea
+							ref={descriptionRef}
+							className="modal-input modal-textarea modal-textarea-description"
+							value={description}
+							onChange={(e) => setDescription(e.target.value)}
+						/>
+					</label>
+
+					{type === 'decision' && (
+						<>
+							<label className="modal-label">
+								Reason
+								<textarea className="modal-input modal-textarea" value={reason} onChange={(e) => setReason(e.target.value)} />
+							</label>
+							<label className="modal-label">
+								Impact
+								<textarea className="modal-input modal-textarea" value={impact} onChange={(e) => setImpact(e.target.value)} />
+							</label>
+						</>
+					)}
+
+					<div className="modal-footer">
+						{mode === 'edit' && onRemove && (
+							<button className="modal-button modal-button-danger" onClick={handleRemove}>Remove</button>
+						)}
+						<div className="modal-footer-right">
+							<button className="modal-button modal-button-ghost" onClick={handleEditCancel}>Cancel</button>
+							<button className="modal-button modal-button-primary" onClick={handleSave} disabled={!canSave}>Save</button>
+						</div>
+					</div>
 				</div>
 			</div>
-		</div>
 		</div>
 	);
 }

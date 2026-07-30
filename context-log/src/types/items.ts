@@ -61,6 +61,7 @@ export interface Relationship {
 
 export interface ActivityEntry {
     id: string;
+    uid: string;
     action: 'create' | 'status_changed' | 'field_updated' | 'moved';
     description: string; // auto-generated, human readable
     fieldChanged?: string;
@@ -71,4 +72,12 @@ export interface ActivityEntry {
 
 export interface ActivityFeedEntry extends ActivityEntry {
     itemId: string;
+}
+
+export interface AllowlistEntry {
+    email: string;
+    addedAt: number;
+    source: 'manual' | 'stripe';
+    notes: string;
+    isAdmin: boolean;
 }

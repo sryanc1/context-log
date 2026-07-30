@@ -136,9 +136,17 @@ body {
   border: 1px solid #CBD3DC;
   width: 420px;
   max-height: 85vh;
+  padding: 0;                 /* padding moves to the inner wrapper now */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;          /* lets the close handle sit outside the card */
+}
+
+.modal-card-scroll {
   overflow-y: auto;
   padding: 20px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
 .modal-title {
@@ -229,6 +237,25 @@ body {
 .modal-button-danger {
   background: #FBE2E2;
   color: #B23B3B;
+}
+
+.modal-close-handle {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #1D242B;
+  color: #FFFFFF;
+  border: 3px solid #EEF1F5;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 101;
 }
 
 .modal-header-preview {
