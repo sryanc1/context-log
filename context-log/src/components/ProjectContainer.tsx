@@ -146,9 +146,9 @@ export function ProjectContainer({ uid, project, items, onRequestCreate, onReque
                         height={CARD_HEIGHT - 18} width={CARD_WIDTH - STRIPE_WIDTH - 14} wrap="word" ellipsis />
                     {getDueUrgency(item.dueDate) && (
                         <Circle
-                            x={CARD_WIDTH - 8}
-                            y={8}
-                            radius={4}
+                            x={CARD_WIDTH - 3}
+                            y={3}
+                            radius={8}
                             fill={getDueUrgency(item.dueDate) === 'overdue' ? colors.dangerIcon : colors.amber}
                         />
                     )}

@@ -195,31 +195,31 @@ export function Board({uid, projects, items, interactive, focusTarget, requested
             onWheel={handleWheel}
         >
             <Layer>
-            {dotPattern && (
-                <Rect x={-10000} y={-10000} width={20000} height={20000} fillPatternImage={dotPattern} fillPatternRepeat="repeat" listening={false} />
-            )}
-            {orderedProjects.map((project) => (
-                <ProjectContainer
-                key={project.id}
-                uid={uid}
-                project={project}
-                items={items.filter((item) => item.containerId === project.id)}
-                onRequestCreate={() => setModalState({ mode: 'create', project })}
-                onRequestEdit={(item) => setModalState({ mode: 'edit', project, item })}
-                onRequestEditProject={onRequestEditProject}
-                />
-            ))}
+                {dotPattern && (
+                    <Rect x={-10000} y={-10000} width={20000} height={20000} fillPatternImage={dotPattern} fillPatternRepeat="repeat" listening={false} />
+                )}
+                {orderedProjects.map((project) => (
+                    <ProjectContainer
+                    key={project.id}
+                    uid={uid}
+                    project={project}
+                    items={items.filter((item) => item.containerId === project.id)}
+                    onRequestCreate={() => setModalState({ mode: 'create', project })}
+                    onRequestEdit={(item) => setModalState({ mode: 'edit', project, item })}
+                    onRequestEditProject={onRequestEditProject}
+                    />
+                ))}
             </Layer>
         </Stage>
 
         {modalState && (
             <ItemModal
-            mode={modalState.mode}
-            initialItem={modalState.mode === 'edit' ? modalState.item : undefined}
-            defaultStatus={modalState.mode === 'create' ? 'backlog' : undefined}
-            onCancel={() => setModalState(null)}
-            onSave={handleSave}
-            onRemove={modalState.mode === 'edit' ? handleRemove : undefined}
+                mode={modalState.mode}
+                initialItem={modalState.mode === 'edit' ? modalState.item : undefined}
+                defaultStatus={modalState.mode === 'create' ? 'backlog' : undefined}
+                onCancel={() => setModalState(null)}
+                onSave={handleSave}
+                onRemove={modalState.mode === 'edit' ? handleRemove : undefined}
             />
         )}
         </div>

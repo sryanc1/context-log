@@ -12,7 +12,11 @@ import { createProject, updateProject, archiveProject } from './services/firebas
 import { VIEWS, type ViewId } from './types/views';
 import { useActivityFeed} from './hooks/useActivityFeed';
 import { TimelineView } from './components/TimelineView';
+import { useAllowlist } from './hooks/useAllowList';
+import { AdminView } from './components/AdminView';
+import { addAllowListEntry, removeAllowlistEnry, setAllowlistAdmin } from './services/firebase';
 import type { Project } from './types/items';
+
 
 
 type ProjectModalState = { mode: 'create' } | { mode: 'edit'; project: Project } | null;
@@ -23,6 +27,8 @@ function App() {
 	const { projects } = useProjects(uid);
 	const { items } = useItems(uid);
 	const {entries: activityEntries} = useActivityFeed(uid);
+	const {entries: allowlistEntries} = useAllowlist(isAdmin);
+
 	const [requestedItemId, setRequestedItemId] = useState<string | null>(null)
 	const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, width: 0, height: 0, scale: 1 });
 	const [projectModalState, setProjectModalState] = useState<ProjectModalState>(null);
@@ -120,7 +126,16 @@ function App() {
 					{activeView === 'timeline' &&(
 						<TimelineView entries={activityEntries} items={items} projects={projects} onSelectItem={handleTimelineSelect}/>
 					)}
-					{activeView && activeView !== 'archive' && activeView !== 'timeline' && (
+					{activeView === 'admin' && (
+						<AdminView
+							entries={allowlistEntries}
+							currentUserEmail={user.email ?? ''}
+							onAdd={(email, notes, grantAdmin) => addAllowListEntry(email, notes, grantAdmin)}
+							onRemove={(email) => removeAllowlistEnry(email)}
+							onTggleAdmin={(email, adminValue) => setAllowlistAdmin(email, adminValue)}
+						/>
+					)}
+					{activeView && !['archive', 'timeline', 'admin'].includes(activeView) && (
 						<p style={{ color: '#6B7280', fontSize: 13 }}>{activeViewDef?.label} view — coming soon.</p>
 					)}
 				</Drawer>

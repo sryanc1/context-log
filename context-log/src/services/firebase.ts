@@ -72,7 +72,7 @@ export async function removeAllowlistEnry(email: string) {
     await deleteDoc(doc(db, 'allowlist', email));   
 }
 
-export async function setAllowlistItem(email: string, isAdmin: boolean) {
+export async function setAllowlistAdmin(email: string, isAdmin: boolean) {
     await updateDoc(doc(db, 'allowlist', email), {isAdmin});
 }
 
