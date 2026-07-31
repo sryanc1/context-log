@@ -81,3 +81,9 @@ export interface AllowlistEntry {
     notes: string;
     isAdmin: boolean;
 }
+
+export interface FcmToken {
+    token: string;
+    createdAt: number;
+    userAgent: string;
+}
