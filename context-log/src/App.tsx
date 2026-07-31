@@ -15,6 +15,9 @@ import { TimelineView } from './components/TimelineView';
 import { useAllowlist } from './hooks/useAllowList';
 import { AdminView } from './components/AdminView';
 import { addAllowListEntry, removeAllowlistEnry, setAllowlistAdmin } from './services/firebase';
+import { Toast } from './components/Toast';
+import { useNotifications } from './hooks/useNotifications';
+import { NotificationBell } from './components/NitoficationBell';
 import type { Project } from './types/items';
 
 
@@ -28,6 +31,7 @@ function App() {
 	const { items } = useItems(uid);
 	const {entries: activityEntries} = useActivityFeed(uid);
 	const {entries: allowlistEntries} = useAllowlist(isAdmin);
+	const {permissionState, requestPermission, toast, dismissToast} = useNotifications(uid);	
 
 	const [requestedItemId, setRequestedItemId] = useState<string | null>(null)
 	const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, width: 0, height: 0, scale: 1 });
@@ -80,12 +84,21 @@ function App() {
 		setRequestedItemId(itemId);
 		setActiveView(null);
 	}
+	
+	const handelBellClick = () => {
+		if (permissionState === 'denied') {
+			window.alert("Noritications are blocked for this site, Check your browser's site settings to allow them, then reload.");			
+		} else if (permissionState === 'default') {
+			requestPermission();
+		}
+	}
 
 	return (
 		<div className="app">
 			<header className="topbar">
 				<h1>context-log</h1>
 				<div className="topbar-user">
+					<NotificationBell state={permissionState} onClick={handelBellClick}/>
 					<button onClick={() => setProjectModalState({ mode: 'create' })}>+ New project</button>
 					<span>{user.email}</span>
 					<button onClick={logout}>Sign out</button>
@@ -150,6 +163,8 @@ function App() {
 				onSave={handleSaveProject}
 				/>
 			)}
+
+			{toast && <Toast title={toast.title} body={toast.body} onDismiss={dismissToast}/>}
 		</div>
 	);
 }

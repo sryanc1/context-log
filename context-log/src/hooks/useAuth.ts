@@ -26,13 +26,13 @@ export function useAuth() {
 
             if (u?.email) {
                 try {
-                const results = await checkAllowlist(u.email);
-                setAllowed(results.allowed);
-                setIsAdmin(results.isAdmin);
+                    const results = await checkAllowlist(u.email);
+                    setAllowed(results.allowed);
+                    setIsAdmin(results.isAdmin);
                 } catch {
-                // Fail closed - a failed check should never silently grant access
-                setAllowed(false);
-                setIsAdmin(false);
+                    // Fail closed - a failed check should never silently grant access
+                    setAllowed(false);
+                    setIsAdmin(false);
                 }
             } else {
                 setAllowed(false);

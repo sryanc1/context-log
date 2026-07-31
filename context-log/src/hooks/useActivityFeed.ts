@@ -7,6 +7,11 @@ export function useActivityFeed(uid: string) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+          if (!uid) {
+            setEntries([]);
+            setLoading(false);
+            return;
+        }
         const unsubscribe = subscribeToRecentActivity(uid, (entries) => {
             setEntries(entries);
             setLoading(false);
