@@ -157,10 +157,12 @@ export function subscribeToItems(uid: string, callback: (items: Item[]) => void)
     });
 }
 
-export async function createItem(uid: string, item: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>) {
+export async function createItem(uid: string, item: Omit<Item, 'id' | 'createdAt' | 'updatedAt' | 'notifiedSoon' | 'notifiedOverdue'>) {
     const now = Date.now();
     const docRef = await addDoc(itemsCollection(uid), {
         ...item,
+        notifiedSoon: false,
+        notifiedOverdue: false,
         createdAt: now,
         updatedAt: now,
     });
@@ -229,6 +231,10 @@ export async function updateItem(
         updatedAt: Date.now(),
         dueDate: values.dueDate,
     };
+    if(values.dueDate != oldItem.dueDate){
+        updates.notifiedSoon = false;
+        updates.nodfiiedOverdue = false;
+    }
     if (values.type === 'decision') {
         updates.reason = values.reason ?? '';
         updates.impact = values.impact ?? '';
