@@ -194,22 +194,24 @@ export function Board({uid, projects, items, interactive, focusTarget, requested
             onDragEnd={(e) => { setStageCursor(e, 'grab'); setStagePos({ x: e.target.x(), y: e.target.y() }); }}
             onWheel={handleWheel}
         >
-            <Layer>
+            <Layer listening={false}>
                 {dotPattern && (
                     <Rect x={-10000} y={-10000} width={20000} height={20000} fillPatternImage={dotPattern} fillPatternRepeat="repeat" listening={false} />
                 )}
-                {orderedProjects.map((project) => (
-                    <ProjectContainer
-                    key={project.id}
-                    uid={uid}
-                    project={project}
-                    items={items.filter((item) => item.containerId === project.id)}
-                    onRequestCreate={() => setModalState({ mode: 'create', project })}
-                    onRequestEdit={(item) => setModalState({ mode: 'edit', project, item })}
-                    onRequestEditProject={onRequestEditProject}
-                    />
-                ))}
             </Layer>
+
+            {orderedProjects.map((project) => (
+                <Layer key={project.id}>
+                    <ProjectContainer
+                        uid={uid}
+                        project={project}
+                        items={items.filter((item) => item.containerId === project.id)}
+                        onRequestCreate={() => setModalState({ mode: 'create', project })}
+                        onRequestEdit={(item) => setModalState({ mode: 'edit', project, item })}
+                        onRequestEditProject={onRequestEditProject}
+                    />
+                </Layer>
+            ))}
         </Stage>
 
         {modalState && (

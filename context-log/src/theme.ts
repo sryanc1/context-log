@@ -6,7 +6,7 @@ export const colors = {
     ink: '#23282D',            // primary text / graphite
     paper: '#FFFFFF',          // card / container body surfaces
     headerBg: '#1D242B',       // project title block header
-    gridDot: '#D7DEE6',        // subtle canvas dot-grid
+    gridDot: '#bdc4cc',        // subtle canvas dot-grid
     border: '#CBD3DC',         // hairline dividers
 
     blueprintBlue: '#1D5C8C',  // Active

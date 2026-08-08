@@ -73,9 +73,10 @@ export function ProjectContainer({ uid, project, items, onRequestCreate, onReque
             onDragStart={(e) => { e.cancelBubble = true; setStageCursor(e, 'grabbing'); }}
             onDragEnd={(e) => { e.cancelBubble = true; setStageCursor(e, 'grab'); updateProjectPosition(uid, project.id, e.target.x(), e.target.y()); }}
         >
-            <Rect width={project.width} height={HEADER_HEIGHT} fill={effectiveColor} cornerRadius={[6, 6, 0, 0]} 
+            <Rect perfectDrawEnabled={false} width={project.width} height={HEADER_HEIGHT} fill={effectiveColor} cornerRadius={[6, 6, 0, 0]} 
                 shadowColor="#000000" shadowBlur={12} shadowOpacity={0.5} shadowOffset={{ x: 0, y: 1 }}/>
             <Text
+                listening={false}
                 text={project.title.toUpperCase()}
                 x={10} y={HEADER_HEIGHT / 2 - 6}
                 fontSize={12} fontStyle="bold" fontFamily="Inter" letterSpacing={0.5}
@@ -83,9 +84,10 @@ export function ProjectContainer({ uid, project, items, onRequestCreate, onReque
                 width={project.width - TIMESTAMP_COL_WIDTH - 90}
                 ellipsis wrap="none"
             />
-            <Line points={[project.width - TIMESTAMP_COL_WIDTH, 8, project.width - TIMESTAMP_COL_WIDTH, HEADER_HEIGHT - 8]} 
+            <Line listening={false} points={[project.width - TIMESTAMP_COL_WIDTH, 8, project.width - TIMESTAMP_COL_WIDTH, HEADER_HEIGHT - 8]} 
                 stroke="#3A4552" strokeWidth={1} />
             <Text
+                listening={false}
                 text={`UPD ${formatRelativeTime(lastActivity)}`}
                 x={project.width - TIMESTAMP_COL_WIDTH + 8} y={HEADER_HEIGHT / 2 - 5}
                 fontSize={9} fontFamily="IBM Plex Mono" fill={headerTextColor} opacity={0.65} letterSpacing={0.3}
@@ -99,14 +101,14 @@ export function ProjectContainer({ uid, project, items, onRequestCreate, onReque
                 shadowColor="#000000" shadowBlur={12} shadowOpacity={0.5} shadowOffset={{ x: 0, y: 1 }}/>
 
             {STATUSES.map((status, i) => (
-                <Group key={status}>
+                <Group key={status} listening={false}>
                     {i > 0 && <Rect x={i * bandWidth} y={HEADER_HEIGHT} width={1} height={bodyHeight} fill={colors.border} />}
                     <Text text={status.toUpperCase()} x={i * bandWidth + 6} y={HEADER_HEIGHT + 6} fontSize={8} fontFamily="IBM Plex Mono" 
                         letterSpacing={0.8} fill={colors.slate} />
                 </Group>
             ))}
 
-            <Rect width={project.width} height={liveHeight} stroke={effectiveColor} strokeWidth={2} cornerRadius={6} listening={false} />
+            <Rect listening={false} width={project.width} height={liveHeight} stroke={effectiveColor} strokeWidth={2} cornerRadius={6}/>
 
             {items.map((item) => (
                 <Group
@@ -139,7 +141,7 @@ export function ProjectContainer({ uid, project, items, onRequestCreate, onReque
                         if (newStatus !== item.status) updateItemStatus(uid, item.id, item.status, newStatus);
                     }}
                 >
-                    <Rect width={CARD_WIDTH} height={CARD_HEIGHT} fill="#f6f5ff" stroke={colors.border} strokeWidth={1} 
+                    <Rect perfectDrawEnabled={false} width={CARD_WIDTH} height={CARD_HEIGHT} fill="#f6f5ff" stroke={colors.border} strokeWidth={1} 
                         cornerRadius={4} shadowColor="#000000" shadowBlur={4} shadowOpacity={0.12} shadowOffset={{ x: 0, y: 1 }} />
                     <Rect width={STRIPE_WIDTH} height={CARD_HEIGHT} fill={statusColors[item.status]} cornerRadius={[4, 0, 0, 4]} />
                     <Text text={item.title} x={STRIPE_WIDTH + 8} y={10} fontSize={10} fontFamily="Inter" fill={colors.ink} 
