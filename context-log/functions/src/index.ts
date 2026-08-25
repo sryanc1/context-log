@@ -21,7 +21,7 @@ interface ItemData {
 
 async function sendToUser(uid: string, title: string, body: string) {
 	console.log(`users id = ${uid}`);
-	const tokensSnap = await db.collection('users').doc(uid).collection('fmcToken').get();
+	const tokensSnap = await db.collection('users').doc(uid).collection('fcmToken').get();
 	if (tokensSnap.empty) {
 		console.log(`No FCM tokens found for uid ${uid} — nothing to send to`);
 		return
