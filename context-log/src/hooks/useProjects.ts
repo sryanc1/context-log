@@ -10,7 +10,7 @@ export function useProjects(uid: string) {
     useEffect(() => {
         if(!uid) {
             setProjects([]);
-            setLoading(true);
+            setLoading(false);
             return;
         }
         const unsubscribe = subscribeToProjects(uid, (projects) => {

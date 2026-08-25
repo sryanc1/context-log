@@ -10,7 +10,7 @@ export function useItems(uid: string) {
     useEffect(() => {
         if(!uid) {
             setItems([]);
-            setLoading(true);
+            setLoading(false);
             return;
         }
         const unsubscribe = subscribeToItems(uid, (items) => {
