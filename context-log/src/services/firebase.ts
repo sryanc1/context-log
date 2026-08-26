@@ -89,10 +89,16 @@ export async function checkAllowlist(email: string): Promise<{allowed: boolean; 
 // ---- Projects ----
 
 export function subscribeToProjects(uid: string, callback: (projects: Project[]) => void) {
-    return onSnapshot(projectsCollection(uid), (snapshot) => {
+    return onSnapshot(
+        projectsCollection(uid),
+        (snapshot) => {
         const projects = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Project);
         callback(projects);
-    });
+        },
+        (error) => {
+        console.warn('Projects listener error (likely transient auth timing):', error.code);
+        }
+    );
 }
 
 export async function createProject(
@@ -150,11 +156,16 @@ export async function archiveProject(uid: string, projectId: string, archived: b
 // ---- Items ----
 
 export function subscribeToItems(uid: string, callback: (items: Item[]) => void) {
-    const q = query(itemsCollection(uid), orderBy('createdAt', 'desc'));
-    return onSnapshot(q, (snapshot) => {
-        const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Item);
-        callback(items);
-    });
+    const q = query(itemsCollection(uid), orderBy('createdAt', 'desc'));    
+    return onSnapshot(q, 
+        (snapshot) => {
+            const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Item);
+            callback(items);
+        },
+        (error) => {
+            console.warn('Item listenrer error (likely transiant auth timing:', error.code)
+        }
+    );
 }
 
 export async function createItem(uid: string, item: Omit<Item, 'id' | 'createdAt' | 'updatedAt' | 'notifiedSoon' | 'notifiedOverdue'>) {
@@ -231,7 +242,7 @@ export async function updateItem(
         updatedAt: Date.now(),
         dueDate: values.dueDate,
     };
-    if(values.dueDate != oldItem.dueDate){
+    if(values.dueDate != oldItem.dueDate || (oldItem.status === 'completed' && values.status !== 'completed')){
         updates.notifiedSoon = false;
         updates.nodfiiedOverdue = false;
     }
@@ -301,12 +312,17 @@ export function subscribeToRecentActivity(uid: string, callback: (entries: Activ
         orderBy('createdAt', 'desc'), 
         limit(200)
     );
-    return onSnapshot(q, (snapshot) => {
-        const entries = snapshot.docs            
-            .map((d) => {
-                const itemId = d.ref.parent.parent?.id ?? '';
-                return { id: d.id, itemId, ...d.data()} as ActivityFeedEntry;
-            });
-        callback(entries)
-    });
+    return onSnapshot(q, 
+        (snapshot) => {
+            const entries = snapshot.docs            
+                .map((d) => {
+                    const itemId = d.ref.parent.parent?.id ?? '';
+                    return { id: d.id, itemId, ...d.data()} as ActivityFeedEntry;
+                });
+            callback(entries)
+        },
+        (error) => {
+            console.warn('Activity listener error (likely transient auth timing:', error.code);
+        }
+    );
 }

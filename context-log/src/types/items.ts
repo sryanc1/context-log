@@ -22,7 +22,7 @@ interface ItemCommonFields {
     updatedAt: number;
     dueDate: number | null;
     notifiedSoon: boolean;
-    nodfiiedOverdue: boolean;
+    notifiedOverdue: boolean;
 }
 
 export interface BaseItem extends ItemCommonFields {

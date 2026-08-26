@@ -12,7 +12,7 @@ export function NotificationBell({ state, onClick}: NotificationBellProps) {
         'Enable notifications';
 
     return (
-        <button className="tpobar-bell" onClick={onClick} title={label} aria-label={label}>
+        <button className="topbar-bell" onClick={onClick} title={label} aria-label={label}>
             {state === 'granted' ? '🔔' : '🔕'}
         </button>
     );

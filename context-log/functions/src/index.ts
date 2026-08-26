@@ -14,14 +14,15 @@ const SOON_THRESHOLD_MS = 24*60*60*1000;
 
 interface ItemData {
 	title: string;
+	status: string;
 	dueDate: number | null;
 	notifiedSoon?: boolean;
-	notifiedOverdue?: boolean;
+	notifiedOverdue?: boolean;	
 }
 
 async function sendToUser(uid: string, title: string, body: string) {
 	console.log(`users id = ${uid}`);
-	const tokensSnap = await db.collection('users').doc(uid).collection('fcmToken').get();
+	const tokensSnap = await db.collection('users').doc(uid).collection('fcmTokens').get();
 	if (tokensSnap.empty) {
 		console.log(`No FCM tokens found for uid ${uid} — nothing to send to`);
 		return
@@ -67,6 +68,7 @@ export const checkDueDates = onSchedule(
 
 		for (const doc of overdueSnap.docs) {
 			const data = doc.data() as ItemData;
+			if (data.status === 'completed') continue;
 			if (data.notifiedOverdue === true) {
 				console.log(`Skipping "${data.title}" — already notified overdue`);
 				continue

@@ -45,13 +45,13 @@ body {
   font-size: 13px;
 }
 
-.topbar-user span {
+.topbar-user-email {
   color: #A9B4C0;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
+  font-size: 16px;
 }
 
-.topbar button {
+.topbar-action {
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 13px;
   font-weight: 500;
@@ -63,11 +63,11 @@ body {
   cursor: pointer;
 }
 
-.topbar button:hover {
+.topbar-action:hover {
   background: #2A323C;
 }
 
-.topbar button:disabled {
+.topbar-action:disabled {
   opacity: 0.5;
   cursor: default;
 }
@@ -686,6 +686,19 @@ body {
   white-space: nowrap;
 }
 
+.notif-center-badge {
+  position: absolute;
+  top: -1px;
+  right: -2px;
+  background: #B23B3B;
+  color: #FFFFFF;
+  font-size: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  border-radius: 8px;
+  padding: 1px 5px;
+  line-height: 1.3;
+}
+
 .topbar-bell {
   background: transparent;
   border: none;
@@ -719,4 +732,94 @@ body {
 .toast-body {
   font-size: 13px;
   color: #D6DDE5;
+}
+
+.notif-center {
+  position: relative;
+}
+
+.notif-center-empty {
+  opacity: 0.3;
+  font-size: 14px;
+  padding: 4px 6px;
+}
+
+.notif-center-trigger {
+  position: relative;
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 6px;
+  color: #FFFFFF;
+}
+
+.topbar-bell:hover,
+.notif-center-trigger:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+
+.notif-center-dropdown {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  width: 280px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: #FFFFFF;
+  border: 1px solid #CBD3DC;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  z-index: 150;
+}
+
+.notif-center-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #EEF1F5;
+  cursor: pointer;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.notif-center-row:hover {
+  background: #EEF1F5;
+}
+
+.notif-center-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.notif-center-dot-overdue {
+  background: #B23B3B;
+}
+
+.notif-center-dot-soon {
+  background: #A8862B;
+}
+
+.notif-center-info {
+  min-width: 0;
+}
+
+.notif-center-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #23282D;
+}
+
+.notif-center-meta {
+  font-size: 11px;
+  color: #6B7280;
+  margin-top: 2px;
 }

@@ -146,7 +146,7 @@ export function ProjectContainer({ uid, project, items, onRequestCreate, onReque
                     <Rect width={STRIPE_WIDTH} height={CARD_HEIGHT} fill={statusColors[item.status]} cornerRadius={[4, 0, 0, 4]} />
                     <Text text={item.title} x={STRIPE_WIDTH + 8} y={10} fontSize={10} fontFamily="Inter" fill={colors.ink} 
                         height={CARD_HEIGHT - 18} width={CARD_WIDTH - STRIPE_WIDTH - 14} wrap="word" ellipsis />
-                    {getDueUrgency(item.dueDate) && (
+                    {item.status !== 'completed' && getDueUrgency(item.dueDate) && (
                         <Circle
                             x={CARD_WIDTH - 3}
                             y={3}

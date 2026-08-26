@@ -8,6 +8,7 @@ import { colors } from '../theme';
 import { setStageCursor } from '../utils/cursor';
 import { getLastActivity } from '../utils/activity';
 import { STATUSES, type Item, type Project } from '../types/items';
+import { useFontsReady } from '../hooks/useFontsReady';
 
 export interface Viewport { x: number; y: number; width: number; height: number; scale: number; }
 export interface FocusTarget { x: number; y: number; }
@@ -44,6 +45,7 @@ export function Board({uid, projects, items, interactive, focusTarget, requested
     const [modalState, setModalState] = useState<ModalState>(null);
     const hasCenteredOnLoad = useRef(false);
     const animationFrameRef = useRef<number | null>(null);
+    const fontsReady = useFontsReady();
 
     useEffect(() => {
         if (!containerNode) return;
@@ -178,6 +180,10 @@ export function Board({uid, projects, items, interactive, focusTarget, requested
         await deleteItem(uid, modalState.item.id);
         setModalState(null);
     };
+
+    if (!fontsReady) {
+        return <p>Loading board...</p>;
+    }
 
     return (
         <div ref={setContainerNode} style={{ width: '100%', height: '100%', backgroundColor: colors.canvasBg }}>

@@ -18,8 +18,9 @@ import { addAllowListEntry, removeAllowlistEnry, setAllowlistAdmin } from './ser
 import { Toast } from './components/Toast';
 import { useNotifications } from './hooks/useNotifications';
 import { NotificationBell } from './components/NitoficationBell';
+import { NotificationCenter } from './components/NotificationCenter';
+import { getUrgentItems } from './utils/dueDate';
 import type { Project } from './types/items';
-
 
 
 type ProjectModalState = { mode: 'create' } | { mode: 'edit'; project: Project } | null;
@@ -75,16 +76,19 @@ function App() {
 		setActiveView(null);
 	};
 
-	const handleTimelineSelect = (itemId: string) => {
-		const item = items.find((i) => i.id === itemId)
-		const project = item ? projects.find((p) => p.id === item.containerId) : undefined
+	const handleFocusAndOpenItem = (itemId: string) => {
+		const item = items.find((i) => i.id === itemId);
+		const project = item ? projects.find((p) => p.id === item.containerId) :undefined;
 		if (item && project && !project.archived) {
-			setFocusTarget({x: project.x + project.width/2, y: project.y + project.height/2});
+			setFocusTarget({ x: project.x + project.width /2, y: project.y + project.height / 2})
 		}
 		setRequestedItemId(itemId);
 		setActiveView(null);
 	}
-	
+
+	const archivedProjectIds = new Set(projects.filter((p) => p.archived).map((p)=> p.id));
+	const urgentItems = getUrgentItems(items, archivedProjectIds);
+
 	const handelBellClick = () => {
 		if (permissionState === 'denied') {
 			window.alert("Noritications are blocked for this site, Check your browser's site settings to allow them, then reload.");			
@@ -99,9 +103,10 @@ function App() {
 				<h1>context-log</h1>
 				<div className="topbar-user">
 					<NotificationBell state={permissionState} onClick={handelBellClick}/>
-					<button onClick={() => setProjectModalState({ mode: 'create' })}>+ New project</button>
-					<span>{user.email}</span>
-					<button onClick={logout}>Sign out</button>
+					<NotificationCenter urgentItems={urgentItems} projects={projects} onSelectItem={handleFocusAndOpenItem}/>
+					<button className="topbar-action" onClick={() => setProjectModalState({ mode: 'create' })}>+ New project</button>
+					<span className="topbar-user-email">{user.email}</span>
+					<button className="topbar-action" onClick={logout}>Sign out</button>
 				</div>
 			</header>
 
@@ -137,7 +142,7 @@ function App() {
 						<ArchiveView archivedProjects={archivedProjects} items={items} onRestore={handleRestoreProject}/>
 					)}
 					{activeView === 'timeline' &&(
-						<TimelineView entries={activityEntries} items={items} projects={projects} onSelectItem={handleTimelineSelect}/>
+						<TimelineView entries={activityEntries} items={items} projects={projects} onSelectItem={handleFocusAndOpenItem}/>
 					)}
 					{activeView === 'admin' && (
 						<AdminView
@@ -157,10 +162,10 @@ function App() {
 
 			{projectModalState && (
 				<ProjectModal
-				mode={projectModalState.mode}
-				initialProject={projectModalState.mode === 'edit' ? projectModalState.project : undefined}
-				onCancel={() => setProjectModalState(null)}
-				onSave={handleSaveProject}
+					mode={projectModalState.mode}
+					initialProject={projectModalState.mode === 'edit' ? projectModalState.project : undefined}
+					onCancel={() => setProjectModalState(null)}
+					onSave={handleSaveProject}
 				/>
 			)}
 
