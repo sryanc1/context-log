@@ -20,6 +20,8 @@ import { useNotifications } from './hooks/useNotifications';
 import { NotificationBell } from './components/NitoficationBell';
 import { NotificationCenter } from './components/NotificationCenter';
 import { getUrgentItems } from './utils/dueDate';
+import { TodayView } from './components/TodayView';
+import { getTodayItems } from './utils/dueDate';
 import type { Project } from './types/items';
 
 
@@ -88,6 +90,7 @@ function App() {
 
 	const archivedProjectIds = new Set(projects.filter((p) => p.archived).map((p)=> p.id));
 	const urgentItems = getUrgentItems(items, archivedProjectIds);
+	const todayItems = getTodayItems(items, archivedProjectIds)
 
 	const handelBellClick = () => {
 		if (permissionState === 'denied') {
@@ -120,43 +123,46 @@ function App() {
 				/>
 
 				<div className="board-area">
-				<Board
-					uid={uid}
-					projects={projects}
-					items={items}
-					interactive={activeView === null}
-					focusTarget={focusTarget}
-					onFocusConsumed={() => setFocusTarget(null)}
-					onViewportChange={handleViewportChange}
-					onRequestEditProject={(project) => setProjectModalState({ mode: 'edit', project })}
-					requestedItemId={requestedItemId}
-					onrequestedItemConsumed={() => setRequestedItemId(null)}
-				/>
+					<Board
+						uid={uid}
+						projects={projects}
+						items={items}
+						interactive={activeView === null}
+						focusTarget={focusTarget}
+						onFocusConsumed={() => setFocusTarget(null)}
+						onViewportChange={handleViewportChange}
+						onRequestEditProject={(project) => setProjectModalState({ mode: 'edit', project })}
+						requestedItemId={requestedItemId}
+						onrequestedItemConsumed={() => setRequestedItemId(null)}
+					/>
 
-				<Drawer
-					isOpen={activeView !== null}
-					title={activeViewDef?.label ?? ''}
-					onClose={() => setActiveView(null)}
-				>
-					{activeView === 'archive' && (
-						<ArchiveView archivedProjects={archivedProjects} items={items} onRestore={handleRestoreProject}/>
-					)}
-					{activeView === 'timeline' &&(
-						<TimelineView entries={activityEntries} items={items} projects={projects} onSelectItem={handleFocusAndOpenItem}/>
-					)}
-					{activeView === 'admin' && (
-						<AdminView
-							entries={allowlistEntries}
-							currentUserEmail={user.email ?? ''}
-							onAdd={(email, notes, grantAdmin) => addAllowListEntry(email, notes, grantAdmin)}
-							onRemove={(email) => removeAllowlistEnry(email)}
-							onTggleAdmin={(email, adminValue) => setAllowlistAdmin(email, adminValue)}
-						/>
-					)}
-					{activeView && !['archive', 'timeline', 'admin'].includes(activeView) && (
-						<p style={{ color: '#6B7280', fontSize: 13 }}>{activeViewDef?.label} view — coming soon.</p>
-					)}
-				</Drawer>
+					<Drawer
+						isOpen={activeView !== null}
+						title={activeViewDef?.label ?? ''}
+						onClose={() => setActiveView(null)}
+					>
+						{activeView === 'today' && (
+							<TodayView items={todayItems} projects={projects} onSelectItem={handleFocusAndOpenItem} />							
+						)}
+						{activeView === 'archive' && (
+							<ArchiveView archivedProjects={archivedProjects} items={items} onRestore={handleRestoreProject}/>
+						)}
+						{activeView === 'timeline' &&(
+							<TimelineView entries={activityEntries} items={items} projects={projects} onSelectItem={handleFocusAndOpenItem}/>
+						)}
+						{activeView === 'admin' && (
+							<AdminView
+								entries={allowlistEntries}
+								currentUserEmail={user.email ?? ''}
+								onAdd={(email, notes, grantAdmin) => addAllowListEntry(email, notes, grantAdmin)}
+								onRemove={(email) => removeAllowlistEnry(email)}
+								onTggleAdmin={(email, adminValue) => setAllowlistAdmin(email, adminValue)}
+							/>
+						)}
+						{activeView && !['archive', 'timeline', 'admin', 'today'].includes(activeView) && (
+							<p style={{ color: '#6B7280', fontSize: 13 }}>{activeViewDef?.label} view — coming soon.</p>
+						)}						
+					</Drawer>
 				</div>
 			</div>
 

@@ -10,11 +10,11 @@ export interface ViewDef {
 }
 
 export const VIEWS: ViewDef[] = [
-    {id: 'archive', label: 'Archive', icon: '🗄'},
+    {id: 'today', label: 'Today', icon: '☀' },    
     {id: 'timeline', label: 'Timeline', icon: '⏱'},
     {id: 'graph', label: 'Graph', icon: '◈' },
     {id: 'search', label: 'Search', icon: '🔍' },
-    {id: 'today', label: 'Today', icon: '☀' },
+    {id: 'archive', label: 'Archive', icon: '🗄'},
     {id: 'admin', label: 'Admin', icon: '⚙', adminOnly: true },    
 ];
 

@@ -1,43 +1,60 @@
-// src/hooks/useNotifications.ts
-
 import { useCallback, useEffect, useState } from 'react';
-import { registerForPushNotifications, listenForForegroundMessages } from '../services/messaging';
+import { registerForPushNotifications, unregisterPushNotifications, listenForForegroundMessages } from '../services/messaging';
 
 export type PermissionState = 'default' | 'granted' | 'denied' | 'unsupported';
 
+const DISABLED_KEY_PREFIX = 'context-log:notifications-disabled:';
+const isDisabledLocally = (uid: string) => localStorage.getItem(DISABLED_KEY_PREFIX + uid) === 'true';
+const setDisabledLocally = (uid: string, disabled: boolean) =>
+  	disabled ? localStorage.setItem(DISABLED_KEY_PREFIX + uid, 'true') : localStorage.removeItem(DISABLED_KEY_PREFIX + uid);
+
 export function useNotifications(uid: string) {
-  const [permissionState, setPermissionState] = useState<PermissionState>(
-    'Notification' in window ? (Notification.permission as PermissionState) : 'unsupported'
-  );
-  const [toast, setToast] = useState<{ title: string; body: string } | null>(null);
+	const [permissionState, setPermissionState] = useState<PermissionState>(
+		'Notification' in window ? (Notification.permission as PermissionState) : 'unsupported'
+	);
+	const [subscribed, setSubscribed] = useState(false);
+	const [toast, setToast] = useState<{ title: string; body: string } | null>(null);
 
-  const requestPermission = useCallback(async () => {
-    if (!uid) return;
-    await registerForPushNotifications(uid);
-    setPermissionState('Notification' in window ? (Notification.permission as PermissionState) : 'unsupported');
-  }, [uid]);
+	const refreshPermissionState = () =>
+		setPermissionState('Notification' in window ? (Notification.permission as PermissionState) : 'unsupported');
 
-  // Auto-prompt once per browser — self-limiting, since Notification.permission
-  // stops being 'default' the moment you answer, granted or denied.
-  useEffect(() => {
-    if (!uid || !('Notification' in window)) return;
-    if (Notification.permission === 'default') {
-      requestPermission();
-    } else if (Notification.permission === 'granted') {
-      // Already decided in a past session — silently refresh the token registration
-      // (tokens can rotate), no prompt needed.
-      registerForPushNotifications(uid);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uid]);
+	const requestPermission = useCallback(async () => {
+		if (!uid) return;
+		await registerForPushNotifications(uid);
+		setDisabledLocally(uid, false);
+		setSubscribed(true);
+		refreshPermissionState();
+	}, [uid]);
 
-  useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-    listenForForegroundMessages((title, body) => setToast({ title, body })).then((unsub) => {
-      unsubscribe = unsub;
-    });
-    return () => unsubscribe?.();
-  }, []);
+	const disableNotifications = useCallback(async () => {
+		if (!uid) return;
+		await unregisterPushNotifications(uid);
+		setDisabledLocally(uid, true);
+		setSubscribed(false);
+	}, [uid]);
 
-  return { permissionState, requestPermission, toast, dismissToast: () => setToast(null) };
+	useEffect(() => {
+		if (!uid || !('Notification' in window)) return;
+		if (Notification.permission === 'default') {
+			requestPermission();
+		} else if (Notification.permission === 'granted') {
+			if (isDisabledLocally(uid)) {
+				setSubscribed(false);
+			} else {
+				registerForPushNotifications(uid);
+				setSubscribed(true);
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [uid]);
+
+	useEffect(() => {
+		let unsubscribe: (() => void) | undefined;
+			listenForForegroundMessages((title, body) => setToast({ title, body })).then((unsub) => {
+			unsubscribe = unsub;
+		});
+		return () => unsubscribe?.();
+	}, []);
+
+	return { permissionState, subscribed, requestPermission, disableNotifications, toast, dismissToast: () => setToast(null) };
 }
