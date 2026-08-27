@@ -9,6 +9,7 @@ import { setStageCursor } from '../utils/cursor';
 import { getLastActivity } from '../utils/activity';
 import { STATUSES, type Item, type Project } from '../types/items';
 import { useFontsReady } from '../hooks/useFontsReady';
+import { getLayerBucket, LAYER_BUCKET_COUNT } from '../utils/layerBucket';
 
 export interface Viewport { x: number; y: number; width: number; height: number; scale: number; }
 export interface FocusTarget { x: number; y: number; }
@@ -206,16 +207,21 @@ export function Board({uid, projects, items, interactive, focusTarget, requested
                 )}
             </Layer>
 
-            {orderedProjects.map((project) => (
-                <Layer key={project.id}>
-                    <ProjectContainer
+            {Array.from({ length: LAYER_BUCKET_COUNT }, (_, bucketIndex) => (
+                <Layer key={bucketIndex}>
+                    {orderedProjects
+                    .filter((project) => getLayerBucket(project.id) === bucketIndex)
+                    .map((project) => (
+                        <ProjectContainer
+                        key={project.id}
                         uid={uid}
                         project={project}
                         items={items.filter((item) => item.containerId === project.id)}
                         onRequestCreate={() => setModalState({ mode: 'create', project })}
                         onRequestEdit={(item) => setModalState({ mode: 'edit', project, item })}
                         onRequestEditProject={onRequestEditProject}
-                    />
+                        />
+                    ))}
                 </Layer>
             ))}
         </Stage>

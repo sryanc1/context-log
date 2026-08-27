@@ -8,13 +8,14 @@ export function useProjects(uid: string) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if(!uid) {
-            setProjects([]);
+        if (!uid) {
+            setProjects([]); // (or setProjects([]) in the other hook)
             setLoading(false);
             return;
         }
-        const unsubscribe = subscribeToProjects(uid, (projects) => {
-            setProjects(projects);
+        setLoading(true); // ← new: genuinely re-enter a loading state for the new uid
+        const unsubscribe = subscribeToProjects(uid, (items) => {
+            setProjects(items);
             setLoading(false);
         });
         return unsubscribe;

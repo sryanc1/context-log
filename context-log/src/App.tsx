@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { useProjects } from './hooks/useProjects';
 import { useItems } from './hooks/useItems';
@@ -19,24 +19,27 @@ import { Toast } from './components/Toast';
 import { useNotifications } from './hooks/useNotifications';
 import { NotificationBell } from './components/NitoficationBell';
 import { NotificationCenter } from './components/NotificationCenter';
-import { getUrgentItems } from './utils/dueDate';
 import { TodayView } from './components/TodayView';
 import { getTodayItems } from './utils/dueDate';
 import { SearchView } from './components/SearchView';
+import { useInactivityTimeout } from './hooks/useInactivityTimeout';
+import { getUrgentItems, getDueUrgency } from './utils/dueDate';
 import type { Project } from './types/items';
 
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
 
 type ProjectModalState = { mode: 'create' } | { mode: 'edit'; project: Project } | null;
 
 function App() {
 	const { user, allowed, isAdmin, loading, logout } = useAuth();
 	const uid = user?.uid ?? '';
-	const { projects } = useProjects(uid);
-	const { items } = useItems(uid);
+	const { items, loading: itemsLoading} = useItems(uid);
+	const hasShownLoginSummary = useRef(false);
+	const [loginToast, setLoginToast] = useState<{ title: string; body: string } | null>(null);
 	const {entries: activityEntries} = useActivityFeed(uid);
 	const {entries: allowlistEntries} = useAllowlist(isAdmin);
 	const {permissionState, subscribed, requestPermission, disableNotifications, toast, dismissToast} = useNotifications(uid);	
-
+	const { projects, loading: projectsLoading } = useProjects(uid);
 	const [requestedItemId, setRequestedItemId] = useState<string | null>(null)
 	const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, width: 0, height: 0, scale: 1 });
 	const [projectModalState, setProjectModalState] = useState<ProjectModalState>(null);
@@ -45,6 +48,30 @@ function App() {
 	const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
 
 	const handleViewportChange = useCallback((v: Viewport) => setViewport(v), []);
+	const activeViewDef = VIEWS.find((v) => v.id === activeView);
+	const archivedProjects = projects.filter((p) => p.archived);
+	const archivedProjectIds = new Set(projects.filter((p) => p.archived).map((p)=> p.id));
+	const urgentItems = getUrgentItems(items, archivedProjectIds);
+	const todayItems = getTodayItems(items, archivedProjectIds)
+
+	useInactivityTimeout(logout, INACTIVITY_TIMEOUT_MS, !!user && allowed);
+
+	useEffect(() => {
+		if (hasShownLoginSummary.current || !uid || itemsLoading || projectsLoading || !allowed) return;
+		hasShownLoginSummary.current = true;
+
+		const urgent = getUrgentItems(items, archivedProjectIds);
+		const overdueCount = urgent.filter((i) => getDueUrgency(i.dueDate) === 'overdue').length;
+		const soonCount = urgent.length - overdueCount;
+
+		if (overdueCount > 0 || soonCount > 0) {
+			const parts = [];
+			if (overdueCount > 0) parts.push(`${overdueCount} overdue`);
+			if (soonCount > 0) parts.push(`${soonCount} due soon`);
+			setLoginToast({ title: 'Welcome back', body: parts.join(', ') });
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [uid, itemsLoading, projectsLoading, allowed]);
 
 	if (loading) return <div className="loading-screen"><p>Loading...</p></div>;
 	if (!user) return <Login />;
@@ -58,9 +85,6 @@ function App() {
 		</div>
 		);
 	}
-
-	const activeViewDef = VIEWS.find((v) => v.id === activeView);
-	const archivedProjects = projects.filter((p) => p.archived);
 
 	const handleSaveProject = async (values: ProjectFormValues) => {
 		if (projectModalState?.mode === 'edit') {
@@ -89,10 +113,6 @@ function App() {
 		setActiveView(null);
 	}
 
-	const archivedProjectIds = new Set(projects.filter((p) => p.archived).map((p)=> p.id));
-	const urgentItems = getUrgentItems(items, archivedProjectIds);
-	const todayItems = getTodayItems(items, archivedProjectIds)
-
 	const handleBellClick = () => {
 		if (permissionState === 'denied') {
 			window.alert("Notifications are blocked for this site. Check your browser's site settings to allow them, then reload.");
@@ -105,10 +125,10 @@ function App() {
 
 	// handler for clicking a project result directly (no item involved):
 	const handleSelectProjectFromSearch = (project: Project) => {
-	if (!project.archived) {
-		setFocusTarget({ x: project.x + project.width / 2, y: project.y + project.height / 2 });
-	}
-	setActiveView(null);
+		if (!project.archived) {
+			setFocusTarget({ x: project.x + project.width / 2, y: project.y + project.height / 2 });
+		}
+		setActiveView(null);
 	};
 
 	return (
@@ -190,6 +210,7 @@ function App() {
 			)}
 
 			{toast && <Toast title={toast.title} body={toast.body} onDismiss={dismissToast}/>}
+			{loginToast && <Toast title={loginToast.title} body={loginToast.body} durationMs={12000} onDismiss={() => setLoginToast(null)} />}
 		</div>
 	);
 }

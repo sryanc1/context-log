@@ -3,14 +3,15 @@ import { useEffect } from "react";
 interface ToastProps {
     title: string;
     body: string;
+    durationMs?: number;
     onDismiss: () => void
 }
 
-export function Toast({title, body, onDismiss}: ToastProps) {
-    useEffect(() => {
-        const timer = setTimeout(onDismiss, 6000);
-        return () => clearTimeout(timer);
-    }, [onDismiss]);
+export function Toast({ title, body, durationMs = 10000, onDismiss }: ToastProps) {
+  useEffect(() => {
+    const timer = setTimeout(onDismiss, durationMs);
+    return () => clearTimeout(timer);
+  }, [durationMs, onDismiss]);
 
     return (
         <div className="toast" onClick={onDismiss}>
