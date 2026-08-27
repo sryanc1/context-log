@@ -20,17 +20,27 @@ export function useNotifications(uid: string) {
 
 	const requestPermission = useCallback(async () => {
 		if (!uid) return;
-		await registerForPushNotifications(uid);
-		setDisabledLocally(uid, false);
-		setSubscribed(true);
+		setSubscribed(true); // optimistic, assume success, revert below if it fails
+		try {
+			await registerForPushNotifications(uid);
+			setDisabledLocally(uid, false);
+		} catch (err) {
+			console.error('Failed to enable notifications:', err);
+			setSubscribed(false); // revert, it didn't actually work			
+		}
 		refreshPermissionState();
 	}, [uid]);
 
 	const disableNotifications = useCallback(async () => {
 		if (!uid) return;
-		await unregisterPushNotifications(uid);
-		setDisabledLocally(uid, true);
-		setSubscribed(false);
+		setSubscribed(false); // optimistic
+		try {
+			await unregisterPushNotifications(uid);
+			setDisabledLocally(uid, true);
+		} catch (err) {
+			console.error('Failed to disable notifications:', err);
+			setSubscribed(true); // revert
+		}
 	}, [uid]);
 
 	useEffect(() => {

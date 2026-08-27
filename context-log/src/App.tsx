@@ -22,6 +22,7 @@ import { NotificationCenter } from './components/NotificationCenter';
 import { getUrgentItems } from './utils/dueDate';
 import { TodayView } from './components/TodayView';
 import { getTodayItems } from './utils/dueDate';
+import { SearchView } from './components/SearchView';
 import type { Project } from './types/items';
 
 
@@ -34,7 +35,7 @@ function App() {
 	const { items } = useItems(uid);
 	const {entries: activityEntries} = useActivityFeed(uid);
 	const {entries: allowlistEntries} = useAllowlist(isAdmin);
-	const {permissionState, requestPermission, toast, dismissToast} = useNotifications(uid);	
+	const {permissionState, subscribed, requestPermission, disableNotifications, toast, dismissToast} = useNotifications(uid);	
 
 	const [requestedItemId, setRequestedItemId] = useState<string | null>(null)
 	const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, width: 0, height: 0, scale: 1 });
@@ -92,20 +93,30 @@ function App() {
 	const urgentItems = getUrgentItems(items, archivedProjectIds);
 	const todayItems = getTodayItems(items, archivedProjectIds)
 
-	const handelBellClick = () => {
+	const handleBellClick = () => {
 		if (permissionState === 'denied') {
-			window.alert("Noritications are blocked for this site, Check your browser's site settings to allow them, then reload.");			
+			window.alert("Notifications are blocked for this site. Check your browser's site settings to allow them, then reload.");
 		} else if (permissionState === 'default') {
 			requestPermission();
+		} else if (permissionState === 'granted') {
+			subscribed ? disableNotifications() : requestPermission();
 		}
+	};
+
+	// handler for clicking a project result directly (no item involved):
+	const handleSelectProjectFromSearch = (project: Project) => {
+	if (!project.archived) {
+		setFocusTarget({ x: project.x + project.width / 2, y: project.y + project.height / 2 });
 	}
+	setActiveView(null);
+	};
 
 	return (
 		<div className="app">
 			<header className="topbar">
 				<h1>context-log</h1>
 				<div className="topbar-user">
-					<NotificationBell state={permissionState} onClick={handelBellClick}/>
+					<NotificationBell state={permissionState} subscribed={subscribed} onClick={handleBellClick}/>
 					<NotificationCenter urgentItems={urgentItems} projects={projects} onSelectItem={handleFocusAndOpenItem}/>
 					<button className="topbar-action" onClick={() => setProjectModalState({ mode: 'create' })}>+ New project</button>
 					<span className="topbar-user-email">{user.email}</span>
@@ -150,6 +161,9 @@ function App() {
 						{activeView === 'timeline' &&(
 							<TimelineView entries={activityEntries} items={items} projects={projects} onSelectItem={handleFocusAndOpenItem}/>
 						)}
+						{activeView === 'search' && (
+							<SearchView items={items} projects={projects} onSelectItem={handleFocusAndOpenItem} onSelectProject={handleSelectProjectFromSearch} />
+						)}
 						{activeView === 'admin' && (
 							<AdminView
 								entries={allowlistEntries}
@@ -159,7 +173,7 @@ function App() {
 								onTggleAdmin={(email, adminValue) => setAllowlistAdmin(email, adminValue)}
 							/>
 						)}
-						{activeView && !['archive', 'timeline', 'admin', 'today'].includes(activeView) && (
+						{activeView && !['archive', 'timeline', 'admin', 'today', 'search'].includes(activeView) && (
 							<p style={{ color: '#6B7280', fontSize: 13 }}>{activeViewDef?.label} view — coming soon.</p>
 						)}						
 					</Drawer>

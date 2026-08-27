@@ -831,3 +831,8 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
+
+.search-input {
+  width: 100%;
+  margin-bottom: 16px;
+}
