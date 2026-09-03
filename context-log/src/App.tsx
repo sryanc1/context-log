@@ -26,7 +26,7 @@ import { SearchView } from './components/SearchView';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
 import type { Project } from './types/items';
 
-const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
+const INACTIVITY_TIMEOUT_MS = 120 * 60 * 1000;
 
 type ProjectModalState = { mode: 'create' } | { mode: 'edit'; project: Project } | null;
 
