@@ -74,7 +74,7 @@ export function ProjectContainer({ uid, project, items, onRequestCreate, isHighl
 
     const handleArchive = async (e: any) => {
         e.cancelBubble = true;
-        const confirmed = window.confirm(`Archive "${project.title}"? It'll be hidden from the board - we don't have a way to view or restore archived projects yet.`);
+        const confirmed = window.confirm(`Archive "${project.title}"? It'll be hidden from the board, but can be found / restored / deleted under "ARCHIVED"`);
         if (!confirmed) return;
         await archiveProject(uid, project.id, true);
     };

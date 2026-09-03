@@ -8,7 +8,7 @@ import { NavRail } from './components/NavRail';
 import { Drawer } from './components/Drawer';
 import { ArchiveView } from './components/ArchiveView';
 import { ProjectModal, type ProjectFormValues } from './components/ProjectModal';
-import { createProject, updateProject, archiveProject } from './services/firebase';
+import { createProject, updateProject, archiveProject, deleteProject } from './services/firebase';
 import { VIEWS, type ViewId } from './types/views';
 import { useActivityFeed} from './hooks/useActivityFeed';
 import { TimelineView } from './components/TimelineView';
@@ -110,6 +110,9 @@ function App() {
 	}
 
 	const archivedProjectIds = new Set(projects.filter((p) => p.archived).map((p)=> p.id));
+	const handleDeleteProject = async (project: Project) => {
+		await deleteProject(uid, project.id);
+	};
 	const urgentItems = getUrgentItems(items, archivedProjectIds);
 	const todayItems = getTodayItems(items, archivedProjectIds)
 
@@ -182,7 +185,7 @@ function App() {
 							<TodayView items={todayItems} projects={projects} onSelectItem={handleFocusAndOpenItem} />							
 						)}
 						{activeView === 'archive' && (
-							<ArchiveView archivedProjects={archivedProjects} items={items} onRestore={handleRestoreProject}/>
+							<ArchiveView archivedProjects={archivedProjects} items={items} onRestore={handleRestoreProject} onDelete={handleDeleteProject} />
 						)}
 						{activeView === 'timeline' &&(
 							<TimelineView entries={activityEntries} items={items} projects={projects} onSelectItem={handleFocusAndOpenItem}/>

@@ -16,6 +16,8 @@ import {
     where,
     setDoc,
     getDocs,
+    writeBatch,
+    query as firestoreQuery
 } from 'firebase/firestore';
 import type { Item, ItemStatus, ActivityEntry, ActivityFeedEntry, Project } from '../types/items';
 import type { ItemFormValues } from '../components/ItemModal';
@@ -151,6 +153,17 @@ export async function archiveProject(uid: string, projectId: string, archived: b
         archived, 
         archivedAt: archived ? Date.now() : null,
         updatedAt: Date.now() });
+}
+
+export async function deleteProject(uid: string, projectId: string) {
+    const itemsQuery = firestoreQuery(itemsCollection(uid), where('containerId', '==', projectId));
+    const itemsSnap = await getDocs(itemsQuery);
+
+    const batch = writeBatch(db);
+    itemsSnap.docs.forEach((itemDoc) => batch.delete(itemDoc.ref));
+    batch.delete(doc(db, 'users', uid, 'projects', projectId));
+
+    await batch.commit();
 }
 
 // ---- Items ----
