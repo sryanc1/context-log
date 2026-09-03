@@ -19,11 +19,11 @@ import { Toast } from './components/Toast';
 import { useNotifications } from './hooks/useNotifications';
 import { NotificationBell } from './components/NitoficationBell';
 import { NotificationCenter } from './components/NotificationCenter';
+import { getUrgentItems } from './utils/dueDate';
 import { TodayView } from './components/TodayView';
 import { getTodayItems } from './utils/dueDate';
 import { SearchView } from './components/SearchView';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
-import { getUrgentItems, getDueUrgency } from './utils/dueDate';
 import type { Project } from './types/items';
 
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
@@ -33,13 +33,12 @@ type ProjectModalState = { mode: 'create' } | { mode: 'edit'; project: Project }
 function App() {
 	const { user, allowed, isAdmin, loading, logout } = useAuth();
 	const uid = user?.uid ?? '';
-	const { items, loading: itemsLoading} = useItems(uid);
-	const hasShownLoginSummary = useRef(false);
-	const [loginToast, setLoginToast] = useState<{ title: string; body: string } | null>(null);
+	const { projects, loading: projectsLoading } = useProjects(uid);
+	const { items, loading: itemsLoading } = useItems(uid);
 	const {entries: activityEntries} = useActivityFeed(uid);
 	const {entries: allowlistEntries} = useAllowlist(isAdmin);
 	const {permissionState, subscribed, requestPermission, disableNotifications, toast, dismissToast} = useNotifications(uid);	
-	const { projects, loading: projectsLoading } = useProjects(uid);
+
 	const [requestedItemId, setRequestedItemId] = useState<string | null>(null)
 	const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, width: 0, height: 0, scale: 1 });
 	const [projectModalState, setProjectModalState] = useState<ProjectModalState>(null);
@@ -48,30 +47,20 @@ function App() {
 	const [focusTarget, setFocusTarget] = useState<FocusTarget | null>(null);
 
 	const handleViewportChange = useCallback((v: Viewport) => setViewport(v), []);
-	const activeViewDef = VIEWS.find((v) => v.id === activeView);
-	const archivedProjects = projects.filter((p) => p.archived);
-	const archivedProjectIds = new Set(projects.filter((p) => p.archived).map((p)=> p.id));
-	const urgentItems = getUrgentItems(items, archivedProjectIds);
-	const todayItems = getTodayItems(items, archivedProjectIds)
+
+	const hasAutoOpenedNotifCenter = useRef(false);
+	const [notifCenterOpen, setNotifCenterOpen] = useState(false);
 
 	useInactivityTimeout(logout, INACTIVITY_TIMEOUT_MS, !!user && allowed);
 
 	useEffect(() => {
-		if (hasShownLoginSummary.current || !uid || itemsLoading || projectsLoading || !allowed) return;
-		hasShownLoginSummary.current = true;
+		if (hasAutoOpenedNotifCenter.current || !uid || itemsLoading || projectsLoading || !allowed) return;
+		hasAutoOpenedNotifCenter.current = true;
 
-		const urgent = getUrgentItems(items, archivedProjectIds);
-		const overdueCount = urgent.filter((i) => getDueUrgency(i.dueDate) === 'overdue').length;
-		const soonCount = urgent.length - overdueCount;
-
-		if (overdueCount > 0 || soonCount > 0) {
-			const parts = [];
-			if (overdueCount > 0) parts.push(`${overdueCount} overdue`);
-			if (soonCount > 0) parts.push(`${soonCount} due soon`);
-			setLoginToast({ title: 'Welcome back', body: parts.join(', ') });
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [uid, itemsLoading, projectsLoading, allowed]);
+		const archivedIds = new Set(projects.filter((p) => p.archived).map((p) => p.id));
+		const urgent = getUrgentItems(items, archivedIds);
+		if (urgent.length > 0) setNotifCenterOpen(true);
+	}, [uid, itemsLoading, projectsLoading, allowed, items, projects]);
 
 	if (loading) return <div className="loading-screen"><p>Loading...</p></div>;
 	if (!user) return <Login />;
@@ -86,6 +75,9 @@ function App() {
 		);
 	}
 
+	const activeViewDef = VIEWS.find((v) => v.id === activeView);
+	const archivedProjects = projects.filter((p) => p.archived);
+
 	const handleSaveProject = async (values: ProjectFormValues) => {
 		if (projectModalState?.mode === 'edit') {
 			await updateProject(uid, projectModalState.project.id, values);
@@ -99,7 +91,7 @@ function App() {
 
 	const handleRestoreProject = async (project: Project) => {
 		await archiveProject(uid, project.id, false);
-		setFocusTarget({ x: project.x + project.width / 2, y: project.y + project.height / 2 });
+		setFocusTarget({ x: project.x + project.width / 2, y: project.y + project.height / 2, projectId: project.id });
 		setActiveView(null);
 	};
 
@@ -107,11 +99,15 @@ function App() {
 		const item = items.find((i) => i.id === itemId);
 		const project = item ? projects.find((p) => p.id === item.containerId) :undefined;
 		if (item && project && !project.archived) {
-			setFocusTarget({ x: project.x + project.width /2, y: project.y + project.height / 2})
+			setFocusTarget({ x: project.x + project.width / 2, y: project.y + project.height / 2, projectId: project.id });
 		}
 		setRequestedItemId(itemId);
 		setActiveView(null);
 	}
+
+	const archivedProjectIds = new Set(projects.filter((p) => p.archived).map((p)=> p.id));
+	const urgentItems = getUrgentItems(items, archivedProjectIds);
+	const todayItems = getTodayItems(items, archivedProjectIds)
 
 	const handleBellClick = () => {
 		if (permissionState === 'denied') {
@@ -126,7 +122,7 @@ function App() {
 	// handler for clicking a project result directly (no item involved):
 	const handleSelectProjectFromSearch = (project: Project) => {
 		if (!project.archived) {
-			setFocusTarget({ x: project.x + project.width / 2, y: project.y + project.height / 2 });
+			setFocusTarget({ x: project.x + project.width / 2, y: project.y + project.height / 2, projectId: project.id });
 		}
 		setActiveView(null);
 	};
@@ -137,7 +133,13 @@ function App() {
 				<h1>context-log</h1>
 				<div className="topbar-user">
 					<NotificationBell state={permissionState} subscribed={subscribed} onClick={handleBellClick}/>
-					<NotificationCenter urgentItems={urgentItems} projects={projects} onSelectItem={handleFocusAndOpenItem}/>
+					<NotificationCenter
+						urgentItems={urgentItems}
+						projects={projects}
+						onSelectItem={handleFocusAndOpenItem}
+						isOpen={notifCenterOpen}
+						onOpenChange={setNotifCenterOpen}
+					/>
 					<button className="topbar-action" onClick={() => setProjectModalState({ mode: 'create' })}>+ New project</button>
 					<span className="topbar-user-email">{user.email}</span>
 					<button className="topbar-action" onClick={logout}>Sign out</button>
@@ -210,7 +212,6 @@ function App() {
 			)}
 
 			{toast && <Toast title={toast.title} body={toast.body} onDismiss={dismissToast}/>}
-			{loginToast && <Toast title={loginToast.title} body={loginToast.body} durationMs={12000} onDismiss={() => setLoginToast(null)} />}
 		</div>
 	);
 }

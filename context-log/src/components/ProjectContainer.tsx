@@ -34,12 +34,13 @@ interface ProjectContainerProps {
     uid: string;
     project: Project;
     items: Item[];
+    isHighlighted: boolean;
     onRequestCreate: () => void;
     onRequestEdit: (item: Item) => void;
     onRequestEditProject: (project: Project) => void;
 }
 
-export function ProjectContainer({ uid, project, items, onRequestCreate, onRequestEdit, onRequestEditProject }: ProjectContainerProps) {
+export function ProjectContainer({ uid, project, items, onRequestCreate, isHighlighted, onRequestEdit, onRequestEditProject }: ProjectContainerProps) {
     const effectiveColor = project.color || colors.headerBg;
     const headerTextColor = getReadableTextColour(effectiveColor);
 
@@ -155,6 +156,7 @@ export function ProjectContainer({ uid, project, items, onRequestCreate, onReque
                     x={item.x} y={item.y}
                     draggable
                     onMouseEnter={(e) => setStageCursor(e, 'grab')}
+                    onTap={(e) => { e.cancelBubble = true; onRequestEdit(item); }}
                     onClick={(e) => { e.cancelBubble = true; onRequestEdit(item); }}
                     dragBoundFunc={function (pos) {
                         const stage = this.getStage();
@@ -224,6 +226,20 @@ export function ProjectContainer({ uid, project, items, onRequestCreate, onReque
             >
                 <Rect width={HANDLE_WIDTH} height={HANDLE_HEIGHT} fill={colors.neutralIcon} opacity={0.35} cornerRadius={4} />
             </Group>
+
+                {isHighlighted && (
+                    <Rect
+                        width={project.width}
+                        height={liveHeight}
+                        stroke={colors.blueprintBlue}
+                        strokeWidth={4}
+                        cornerRadius={6}
+                        shadowColor={colors.blueprintBlue}
+                        shadowBlur={16}
+                        shadowOpacity={0.6}
+                        listening={false}
+                    />
+                )}
         </Group>
     );
 }

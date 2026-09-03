@@ -12,12 +12,15 @@ import { useFontsReady } from '../hooks/useFontsReady';
 import { getLayerBucket, LAYER_BUCKET_COUNT } from '../utils/layerBucket';
 
 export interface Viewport { x: number; y: number; width: number; height: number; scale: number; }
-export interface FocusTarget { x: number; y: number; }
+export interface FocusTarget { x: number; y: number; projectId?: string; }
 
 const MIN_SCALE = 0.3;
 const MAX_SCALE = 2.5;
 const SCALE_BY = 1.05;
-const PAN_DURATION = 500;
+const PAN_DURATION = 900;
+const MIN_COMFORTABLE_SCALE = 0.6;
+const DEFAULT_FOCUS_SCALE = 1;
+const HIGHLIGHT_DURATION_MS = 2500;
 
 type ModalState =
     | { mode: 'create'; project: Project }
@@ -79,15 +82,17 @@ export function Board({uid, projects, items, interactive, focusTarget, requested
         img.src = canvas.toDataURL();
     }, []);
 
+    const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [highlightedProjectId, setHighlightedProjectId] = useState<string | null>(null);
+
+    // Open the requested note immediately — independent of any pan/zoom animation.
     useEffect(() => {
         if (!requestedItemId) return;
         const item = items.find((i) => i.id === requestedItemId);
         const project = item ? projects.find((p) => p.id === item.containerId) : undefined;
-        if (item && project) {
-            setModalState({mode: 'edit', project, item});
-        }
+        if (item && project) setModalState({ mode: 'edit', project, item });
         onrequestedItemConsumed();
-    }, [requestedItemId, items, projects, onrequestedItemConsumed])
+    }, [requestedItemId, items, projects, onrequestedItemConsumed]);
 
     const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
         if (!interactive) return;
@@ -127,26 +132,36 @@ export function Board({uid, projects, items, interactive, focusTarget, requested
         hasCenteredOnLoad.current = true;
     }, [size, orderedProjects, stageScale]);
 
-    // Smoothly pan to an on-demand focus target (e.g. restoring a project from Archive)
+    // Pan/zoom to a focus target — runs concurrently with the note opening, not before/after it.
     useEffect(() => {
         if (!focusTarget) return;
         if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
 
-        const startX = stagePos.x;
-        const startY = stagePos.y;
-        const endX = size.width / 2 - focusTarget.x * stageScale;
-        const endY = size.height / 2 - focusTarget.y * stageScale;
+        const startScale = stageScale;
+        const targetScale = startScale < MIN_COMFORTABLE_SCALE ? DEFAULT_FOCUS_SCALE : startScale;
+        const startPos = { x: stagePos.x, y: stagePos.y };
+        const endPos = {
+            x: size.width / 2 - focusTarget.x * targetScale,
+            y: size.height / 2 - focusTarget.y * targetScale,
+        };
         const startTime = performance.now();
 
         const step = (now: number) => {
             const elapsed = now - startTime;
             const t = Math.min(1, elapsed / PAN_DURATION);
-            const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
-            setStagePos({ x: startX + (endX - startX) * eased, y: startY + (endY - startY) * eased });
+            const eased = 1 - Math.pow(1 - t, 3);
+
+            setStageScale(startScale + (targetScale - startScale) * eased);
+            setStagePos({
+                x: startPos.x + (endPos.x - startPos.x) * eased,
+                y: startPos.y + (endPos.y - startPos.y) * eased,
+            });
+
             if (t < 1) {
                 animationFrameRef.current = requestAnimationFrame(step);
             } else {
-                onFocusConsumed();
+                if (focusTarget.projectId) setHighlightedProjectId(focusTarget.projectId);
+                onFocusConsumed(); // only consumed once the animation genuinely finishes
             }
         };
         animationFrameRef.current = requestAnimationFrame(step);
@@ -156,6 +171,17 @@ export function Board({uid, projects, items, interactive, focusTarget, requested
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [focusTarget]);
+
+    // Highlight ring lifetime is still driven by the note being closed, not a fixed timer —
+    // if the animation finishes while you're still reading, the visible countdown waits
+    // until you actually close it and can see the board again.
+    useEffect(() => {
+        if (modalState || !highlightedProjectId) return;
+        highlightTimeoutRef.current = setTimeout(() => setHighlightedProjectId(null), HIGHLIGHT_DURATION_MS);
+        return () => {
+            if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
+        };
+    }, [modalState, highlightedProjectId]);
 
     const handleSave = async (values: ItemFormValues) => {
         if (!modalState) return;
@@ -213,13 +239,14 @@ export function Board({uid, projects, items, interactive, focusTarget, requested
                     .filter((project) => getLayerBucket(project.id) === bucketIndex)
                     .map((project) => (
                         <ProjectContainer
-                        key={project.id}
-                        uid={uid}
-                        project={project}
-                        items={items.filter((item) => item.containerId === project.id)}
-                        onRequestCreate={() => setModalState({ mode: 'create', project })}
-                        onRequestEdit={(item) => setModalState({ mode: 'edit', project, item })}
-                        onRequestEditProject={onRequestEditProject}
+                            key={project.id}
+                            uid={uid}
+                            project={project}
+                            items={items.filter((item) => item.containerId === project.id)}
+                            isHighlighted={project.id === highlightedProjectId}
+                            onRequestCreate={() => setModalState({ mode: 'create', project })}
+                            onRequestEdit={(item) => setModalState({ mode: 'edit', project, item })}
+                            onRequestEditProject={onRequestEditProject}
                         />
                     ))}
                 </Layer>
