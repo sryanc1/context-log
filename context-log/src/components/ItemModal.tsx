@@ -141,6 +141,10 @@ export function ItemModal({ mode, initialItem, defaultStatus, onSave, onCancel, 
 						)}
 					</div>
 
+					<div className="view-timestamps">
+						Created {new Date(initialItem.createdAt).toLocaleDateString()} · Updated {new Date(initialItem.createdAt).toLocaleDateString()}
+					</div>
+
 					{initialItem.tags.length > 0 && (
 						<div className="view-tag-row">
 							{initialItem.tags.map((tag) => <span key={tag} className="view-tag">{tag}</span>)}

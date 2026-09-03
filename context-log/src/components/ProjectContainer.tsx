@@ -79,6 +79,8 @@ export function ProjectContainer({ uid, project, items, onRequestCreate, isHighl
         await archiveProject(uid, project.id, true);
     };
 
+    const orderedItems = [...items].sort((a, b) => a.createdAt - b.createdAt);
+
    return (
         <Group x={liveX} y={liveY}>
             <Group
@@ -149,8 +151,8 @@ export function ProjectContainer({ uid, project, items, onRequestCreate, isHighl
             ))}
 
             <Rect listening={false} width={project.width} height={liveHeight} stroke={effectiveColor} strokeWidth={2} cornerRadius={6}/>
-
-            {items.map((item) => (
+            
+            {orderedItems.map((item) => (
                 <Group
                     key={item.id}
                     x={item.x} y={item.y}

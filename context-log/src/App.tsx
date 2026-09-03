@@ -54,7 +54,11 @@ function App() {
 	useInactivityTimeout(logout, INACTIVITY_TIMEOUT_MS, !!user && allowed);
 
 	useEffect(() => {
-		if (hasAutoOpenedNotifCenter.current || !uid || itemsLoading || projectsLoading || !allowed) return;
+		if (!uid) {
+			hasAutoOpenedNotifCenter.current = false; // logged out — allow the next login to trigger this again
+			return;
+		}
+		if (hasAutoOpenedNotifCenter.current || itemsLoading || projectsLoading || !allowed) return;
 		hasAutoOpenedNotifCenter.current = true;
 
 		const archivedIds = new Set(projects.filter((p) => p.archived).map((p) => p.id));
