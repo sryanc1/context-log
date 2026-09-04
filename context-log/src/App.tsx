@@ -24,9 +24,11 @@ import { TodayView } from './components/TodayView';
 import { getTodayItems } from './utils/dueDate';
 import { SearchView } from './components/SearchView';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
+import { useUserSettings } from './hooks/useUserSettings';
+import { SettingsModal } from './components/Settingsmodal';
+import { updateUserSettings } from './services/firebase';
+import type { UserSettings } from './types/settings';
 import type { Project } from './types/items';
-
-const INACTIVITY_TIMEOUT_MS = 120 * 60 * 1000;
 
 type ProjectModalState = { mode: 'create' } | { mode: 'edit'; project: Project } | null;
 
@@ -51,7 +53,20 @@ function App() {
 	const hasAutoOpenedNotifCenter = useRef(false);
 	const [notifCenterOpen, setNotifCenterOpen] = useState(false);
 
-	useInactivityTimeout(logout, INACTIVITY_TIMEOUT_MS, !!user && allowed);
+	const [settingsOpen, setSettingsOpen] = useState(false);
+	const { settings: userSettings, loading: settingsLoading } = useUserSettings(uid);
+	const hasSyncedTimezone = useRef(false);
+
+	useEffect(() => {
+		if (!uid || settingsLoading || hasSyncedTimezone.current) return;
+		const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		if (detected && detected !== userSettings.timezone) {
+			updateUserSettings(uid, { timezone: detected });
+		}
+		hasSyncedTimezone.current = true;
+	}, [uid, settingsLoading, userSettings.timezone]);
+
+	useInactivityTimeout(logout, userSettings.inactivityTimeoutMinutes * 60 * 1000, !!user && allowed);
 
 	useEffect(() => {
 		if (!uid) {
@@ -116,16 +131,6 @@ function App() {
 	const urgentItems = getUrgentItems(items, archivedProjectIds);
 	const todayItems = getTodayItems(items, archivedProjectIds)
 
-	const handleBellClick = () => {
-		if (permissionState === 'denied') {
-			window.alert("Notifications are blocked for this site. Check your browser's site settings to allow them, then reload.");
-		} else if (permissionState === 'default') {
-			requestPermission();
-		} else if (permissionState === 'granted') {
-			subscribed ? disableNotifications() : requestPermission();
-		}
-	};
-
 	// handler for clicking a project result directly (no item involved):
 	const handleSelectProjectFromSearch = (project: Project) => {
 		if (!project.archived) {
@@ -139,7 +144,7 @@ function App() {
 			<header className="topbar">
 				<h1>context-log</h1>
 				<div className="topbar-user">
-					<NotificationBell state={permissionState} subscribed={subscribed} onClick={handleBellClick}/>
+					<NotificationBell subscribed={subscribed} onClick={() => setSettingsOpen(true)} />
 					<NotificationCenter
 						urgentItems={urgentItems}
 						projects={projects}
@@ -219,6 +224,19 @@ function App() {
 			)}
 
 			{toast && <Toast title={toast.title} body={toast.body} onDismiss={dismissToast}/>}
+			{settingsOpen && (
+				<SettingsModal
+					settings={userSettings}
+					permissionState={permissionState}
+					subscribed={subscribed}
+					onTogglePush={() => (subscribed ? disableNotifications() : requestPermission())}
+					onSave={async (newSettings: UserSettings) => {
+					await updateUserSettings(uid, newSettings);
+					setSettingsOpen(false);
+					}}
+					onCancel={() => setSettingsOpen(false)}
+				/>
+			)}
 		</div>
 	);
 }

@@ -23,6 +23,7 @@ import type { Item, ItemStatus, ActivityEntry, ActivityFeedEntry, Project } from
 import type { ItemFormValues } from '../components/ItemModal';
 import type { ProjectFormValues } from '../components/ProjectModal';
 import type { AllowlistEntry } from '../types/items';
+import { DEFAULT_SETTING, type UserSettings } from '../types/settings';
 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -47,6 +48,22 @@ const formatForLog = (key: string, value: unknown) =>
     ? new Date(value).toLocaleDateString()
     : String(value ?? '');
 
+// ---- User Settings ----
+
+export function subscribeToUserSettings(uid: string, callback: (settings: UserSettings) => void) {
+    return onSnapshot(doc(db, 'users', uid), (snap) =>{
+        const data = snap.data();
+        callback({
+            notificationHour: data?.notificationHour ?? DEFAULT_SETTING.notificationHour,
+            inactivityTimeoutMinutes: data?.inactivityTimeoutMinutes ?? DEFAULT_SETTING.inactivityTimeoutMinutes,
+            timezone: data?.timezone ?? DEFAULT_SETTING.timezone,
+        });
+    });
+}
+
+export async function updateUserSettings(uid: string, settings: Partial<UserSettings>) {
+    await setDoc(doc(db, 'users', uid), settings, {merge:true});    
+}
 
 // ---- Allowlist ----
 
@@ -60,7 +77,7 @@ export function subscribeToAllowlist(callback: (entries: AllowlistEntry[]) => vo
     });
 }
 
-export async  function addAllowListEntry(email: string, notes: string, isAdmin: boolean){
+export async function addAllowListEntry(email: string, notes: string, isAdmin: boolean){
     const normalized = normalizeEmail(email);
     await setDoc(doc(db, 'allowlist', normalized), {
         addedAt: Date.now(),

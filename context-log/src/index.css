@@ -841,6 +841,13 @@ body {
   margin-bottom: 12px;
 }
 
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 @media (max-width: 720px) {
   .nav-rail { width: 56px; }
   .nav-rail-label { display: none; }
