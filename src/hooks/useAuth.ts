@@ -44,7 +44,14 @@ export function useAuth() {
         return unsubscribe;
     }, []);
 
-    const login = () => signInWithPopup(auth, provider);
+    const login = async () => {
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (err) {
+            console.error('Sign-in failed:', err);
+            alert('Sign-in failed. Check the console for details.');
+        }
+    };
     const logout = () => signOut(auth);
 
     return { user, allowed, isAdmin, loading, login, logout };
