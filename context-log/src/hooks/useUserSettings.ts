@@ -8,12 +8,12 @@ export function useUserSettings(uid: string) {
 
     useEffect(() => {
         if (!uid) {
-        setLoading(false);
-        return;
+            setLoading(false);
+            return;
         }
         const unsubscribe = subscribeToUserSettings(uid, (s) => {
-        setSettings(s);
-        setLoading(false);
+            setSettings(s);
+            setLoading(false);
         });
         return unsubscribe;
     }, [uid]);

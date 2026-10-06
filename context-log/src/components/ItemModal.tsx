@@ -246,15 +246,21 @@ export function ItemModal({ mode, initialItem, defaultStatus, onSave, onCancel, 
 						</>
 					)}
 
-					<div className="modal-footer">
-						{mode === 'edit' && onRemove && (
+					{mode === 'edit' && onRemove ? (
+						<div className='modal-footer'>
 							<button className="modal-button modal-button-danger" onClick={handleRemove}>Remove</button>
-						)}
+							<div className='modal-footer-right'>
+								<button className="modal-button modal-button-ghost" onClick={handleEditCancel}>Cancel</button>
+								<button className="modal-button modal-button-primary" onClick={handleSave} disabled={!canSave}>Save</button>
+							</div>
+						</div>
+						
+					) : (
 						<div className="modal-footer-right">
 							<button className="modal-button modal-button-ghost" onClick={handleEditCancel}>Cancel</button>
 							<button className="modal-button modal-button-primary" onClick={handleSave} disabled={!canSave}>Save</button>
 						</div>
-					</div>
+					)}
 				</div>
 			</div>
 		</div>

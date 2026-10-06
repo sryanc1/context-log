@@ -206,6 +206,7 @@ body {
 .modal-footer-right {
   display: flex;
   gap: 8px;
+  float: right;
 }
 
 .modal-button {
@@ -759,7 +760,6 @@ body {
   left: 50%;
   right: auto;
   transform: translateX(-50%);
-  width: calc(100vw - 30vw);
   top: 40px;
   max-height: 320px;
   overflow-y: auto;
