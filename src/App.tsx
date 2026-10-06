@@ -25,7 +25,7 @@ import { getTodayItems } from './utils/dueDate';
 import { SearchView } from './components/SearchView';
 import { useInactivityTimeout } from './hooks/useInactivityTimeout';
 import { useUserSettings } from './hooks/useUserSettings';
-import { SettingsModal } from './components/Settingsmodal';
+import { SettingsModal } from './components/SettingsModal';
 import { updateUserSettings } from './services/firebase';
 import type { UserSettings } from './types/settings';
 import type { Project } from './types/items';
