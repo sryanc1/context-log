@@ -3,26 +3,27 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Item, ItemStatus, ItemType, Priority } from '../types/items';
 import { getDueUrgency } from '../utils/dueDate';
+import { useBackdropClose} from '../hooks/useBackdropClose'
 
 export interface ItemFormValues {
-  title: string;
-  description: string;
-  type: ItemType;
-  priority: Priority;
-  status: ItemStatus;
-  tags: string[];
-  dueDate: number | null;
-  reason?: string;
-  impact?: string;
+	title: string;
+	description: string;
+	type: ItemType;
+	priority: Priority;
+	status: ItemStatus;
+	tags: string[];
+	dueDate: number | null;
+	reason?: string;
+	impact?: string;
 }
 
 interface ItemModalProps {
-  mode: 'create' | 'edit';
-  initialItem?: Item;
-  defaultStatus?: ItemStatus;
-  onSave: (values: ItemFormValues) => void;
-  onCancel: () => void;
-  onRemove?: () => void;
+	mode: 'create' | 'edit';
+	initialItem?: Item;
+	defaultStatus?: ItemStatus;
+	onSave: (values: ItemFormValues) => void;
+	onCancel: () => void;
+	onRemove?: () => void;
 }
 
 const ITEM_TYPES: ItemType[] = ['task', 'issue', 'decision', 'note', 'document', 'meeting', 'contact', 'asset'];
@@ -32,17 +33,17 @@ const STATUSES: ItemStatus[] = ['backlog', 'active', 'waiting', 'completed'];
 // Single source of truth for "what should the form contain right now" —
 // used both to initialize state and to reset it when an edit is discarded.
 function getFormValuesFromItem(item?: Item, defaultStatus?: ItemStatus) {
-  return {
-    title: item?.title ?? '',
-    description: item?.description ?? '',
-    type: (item?.type ?? 'task') as ItemType,
-    priority: (item?.priority ?? 'medium') as Priority,
-    status: item?.status ?? defaultStatus ?? 'backlog',
-    tagsInput: item?.tags.join(', ') ?? '',
-    dueDateInput: item?.dueDate ? new Date(item.dueDate).toISOString().slice(0, 10) : '',
-    reason: item?.type === 'decision' ? item.reason : '',
-    impact: item?.type === 'decision' ? item.impact : '',
-  };
+	return {
+		title: item?.title ?? '',
+		description: item?.description ?? '',
+		type: (item?.type ?? 'task') as ItemType,
+		priority: (item?.priority ?? 'medium') as Priority,
+		status: item?.status ?? defaultStatus ?? 'backlog',
+		tagsInput: item?.tags.join(', ') ?? '',
+		dueDateInput: item?.dueDate ? new Date(item.dueDate).toISOString().slice(0, 10) : '',
+		reason: item?.type === 'decision' ? item.reason : '',
+		impact: item?.type === 'decision' ? item.impact : '',
+	};
 }
 
 export function ItemModal({ mode, initialItem, defaultStatus, onSave, onCancel, onRemove }: ItemModalProps) {
@@ -120,11 +121,13 @@ export function ItemModal({ mode, initialItem, defaultStatus, onSave, onCancel, 
 		setIsEditing(false);
 	};
 
+	const backdropHandlers = useBackdropClose(onCancel);
+
 	// ---- View mode — only reachable when editing an existing item ----
 	if (!isEditing && initialItem) {
 		const urgency = getDueUrgency(initialItem.dueDate);
 		return (
-		<div className="modal-backdrop" onClick={onCancel}>
+		<div className="modal-backdrop" {...backdropHandlers}>
 			<div className="modal-card" onClick={(e) => e.stopPropagation()}>
 				<div className="modal-card-scroll">
 					<button className="modal-close-handle" onClick={onCancel} aria-label="Close">✕</button>

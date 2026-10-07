@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { Project } from "../types/items";
 import { projectColors } from "../theme";
 import { getReadableTextColour } from "../utils/contrast";
+import { useBackdropClose } from "../hooks/useBackdropClose";
 
 export interface ProjectFormValues {
     title: string;
@@ -38,8 +39,10 @@ export function ProjectModal({ mode, initialProject, onSave, onCancel}: ProjectM
         onSave({title: title.trim(), description, color});
     };
 
+    const backdropHandlers = useBackdropClose(onCancel);
+
     return (
-        <div className="modal-backdrop" onClick={onCancel}>
+        <div className="modal-backdrop" {...backdropHandlers}>
             <div className="modal-card" onClick={(e) => e.stopPropagation()}>
                 <button className="modal-close-handle" onClick={onCancel} aria-label="Close">✕</button>
                 <div className="modal-card-scroll">

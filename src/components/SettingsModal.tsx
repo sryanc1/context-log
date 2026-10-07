@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { UserSettings } from '../types/settings';
 import type { PermissionState } from '../hooks/useNotifications';
+import { useBackdropClose } from '../hooks/useBackdropClose';
 
 interface SettingsModalProps {
     settings: UserSettings;
@@ -22,8 +23,10 @@ export function SettingsModal({ settings, permissionState, subscribed, onToggleP
         permissionState === 'granted' && subscribed ? 'On for this device' :
         'Off for this device';
 
+    const backdropHandlers = useBackdropClose(onCancel);
+
     return (
-        <div className="modal-backdrop" onClick={onCancel}>
+        <div className="modal-backdrop" {...backdropHandlers}>
             <div className="modal-card" onClick={(e) => e.stopPropagation()}>
                 <button className="modal-close-handle" onClick={onCancel} aria-label="Close">✕</button>
                 <div className='modal-card-scroll'>
