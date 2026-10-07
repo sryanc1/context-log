@@ -1,6 +1,6 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { defineSecret } from 'firebase-functions/params';
+//import { defineSecret } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
 //import * as nodemailer from 'nodemailer';
 
@@ -8,10 +8,10 @@ admin.initializeApp();
 const db = admin.firestore();
 const messaging = admin.messaging();
 
-const smtpHost = defineSecret('SMTP_HOST');
-const smtpUser = defineSecret('SMTP_USER');
-const smtpPass = defineSecret('SMTP_PASS');
-const smtpFrom = defineSecret('SMTP_FROM');
+// const smtpHost = defineSecret('SMTP_HOST');
+// const smtpUser = defineSecret('SMTP_USER');
+// const smtpPass = defineSecret('SMTP_PASS');
+// const smtpFrom = defineSecret('SMTP_FROM');
 
 export const healthCheck = onRequest((req, res) => {
  	res.send('context-log functions: alive');
@@ -117,7 +117,7 @@ export const checkDueDates = onSchedule(
 	{
 		schedule: 'every 1 hours',
 		timeZone: 'Australia/Adelaide',
-		secrets: [smtpHost, smtpUser, smtpPass, smtpFrom],
+		//secrets: [smtpHost, smtpUser, smtpPass, smtpFrom],
 	},
 	async () => {
 		settingsCache.clear();
