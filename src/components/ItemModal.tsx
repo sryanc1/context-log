@@ -183,7 +183,7 @@ export function ItemModal({ mode, initialItem, defaultStatus, onSave, onCancel, 
 
 	// ---- Edit / create form mode ----
 	return (
-		<div className="modal-backdrop" onClick={handleEditCancel}>
+		<div className="modal-backdrop" {...backdropHandlers}>
 			<div className="modal-card" onClick={(e) => e.stopPropagation()}>
 				<div className="modal-card-scroll">
 					<button className="modal-close-handle" onClick={handleEditCancel} aria-label="Close">✕</button>
