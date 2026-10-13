@@ -25,7 +25,7 @@ messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title ?? 'context-log';
   const options = {
     body: payload.notification?.body ?? '',
-    icon: '/icon-192.png', // placeholder path — update once a real app icon exists
+    icon: new URL('icon-192.png', self.registration.scope).href,
     data: payload.data,
   };
   self.registration.showNotification(title, options);

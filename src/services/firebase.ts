@@ -356,3 +356,18 @@ export function subscribeToRecentActivity(uid: string, callback: (entries: Activ
         }
     );
 }
+
+export function subscribeToItemActivity(
+    uid: string,
+    itemId: string,
+    callback: (entries: ActivityEntry[]) => void
+) {
+    const q = query(activityCollection(uid, itemId), orderBy('createdAt', 'desc'))
+    return onSnapshot (
+        q,
+        (snapshot) => {
+            callback(snapshot.docs.map((d) => ({id: d.id, ...d.data()}) as ActivityEntry));
+        },
+        (error) => console.warn('Item activity listener error:', error.code)
+    )
+}
