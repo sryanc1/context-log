@@ -848,6 +848,28 @@ body {
   gap: 10px;
 }
 
+.item-history {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.item-history-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 10px;
+  background: #FFFFFF;
+  border: 1px solid #CBD3DC;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.item-history-desc {
+  font-size: 13px;
+  color: #23282D;
+}
+
 @media (max-width: 720px) {
   .nav-rail { width: 56px; }
   .nav-rail-label { display: none; }

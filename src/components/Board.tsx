@@ -255,6 +255,7 @@ export function Board({uid, projects, items, interactive, focusTarget, requested
 
         {modalState && (
             <ItemModal
+                uid={uid}
                 mode={modalState.mode}
                 initialItem={modalState.mode === 'edit' ? modalState.item : undefined}
                 defaultStatus={modalState.mode === 'create' ? 'backlog' : undefined}

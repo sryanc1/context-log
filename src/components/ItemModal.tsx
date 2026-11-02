@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { Item, ItemStatus, ItemType, Priority } from '../types/items';
 import { getDueUrgency } from '../utils/dueDate';
 import { useBackdropClose} from '../hooks/useBackdropClose'
+import { useItemActivity } from '../hooks/useItemActivity';
+import { ItemHistoryList } from './ItemHistoryList';
 
 export interface ItemFormValues {
 	title: string;
@@ -18,6 +20,7 @@ export interface ItemFormValues {
 }
 
 interface ItemModalProps {
+	uid?: string;
 	mode: 'create' | 'edit';
 	initialItem?: Item;
 	defaultStatus?: ItemStatus;
@@ -46,7 +49,7 @@ function getFormValuesFromItem(item?: Item, defaultStatus?: ItemStatus) {
 	};
 }
 
-export function ItemModal({ mode, initialItem, defaultStatus, onSave, onCancel, onRemove }: ItemModalProps) {
+export function ItemModal({ uid, mode, initialItem, defaultStatus, onSave, onCancel, onRemove }: ItemModalProps) {
 	const initialValues = getFormValuesFromItem(initialItem, defaultStatus);
 
 	const [isEditing, setIsEditing] = useState(mode === 'create');
@@ -123,6 +126,13 @@ export function ItemModal({ mode, initialItem, defaultStatus, onSave, onCancel, 
 
 	const backdropHandlers = useBackdropClose(onCancel);
 
+	const [showHistory, setShowHistory] = useState(false);
+	const { entries: historyEntries, loading: historyLoading } = useItemActivity(
+		uid ?? '',
+		initialItem?.id ?? '',
+		showHistory
+	);
+
 	// ---- View mode — only reachable when editing an existing item ----
 	if (!isEditing && initialItem) {
 		const urgency = getDueUrgency(initialItem.dueDate);
@@ -155,14 +165,20 @@ export function ItemModal({ mode, initialItem, defaultStatus, onSave, onCancel, 
 					)}
 
 					<div className="view-body">
-						<p className="view-description">{initialItem.description || 'No description yet.'}</p>
-
-						{initialItem.type === 'decision' && (
+						{showHistory ? (
+							<ItemHistoryList entries={historyEntries} loading={historyLoading} />
+						) : (
 							<>
+							<p className="view-description">{initialItem.description || 'No description yet.'}</p>
+
+							{initialItem.type === 'decision' && (
+								<>
 								<div className="view-section-label">Reason</div>
 								<p className="view-description">{initialItem.reason || '—'}</p>
 								<div className="view-section-label">Impact</div>
 								<p className="view-description">{initialItem.impact || '—'}</p>
+								</>
+							)}
 							</>
 						)}
 					</div>
@@ -171,9 +187,12 @@ export function ItemModal({ mode, initialItem, defaultStatus, onSave, onCancel, 
 						{onRemove && (
 							<button className="modal-button modal-button-danger" onClick={handleRemove}>Remove</button>
 						)}
+						<button className="modal-button modal-button-ghost" onClick={() => setShowHistory((s) => !s)}>
+							{showHistory ? 'Details' : 'History'}
+						</button>
 						<div className="modal-footer-right">
-							<button className="modal-button modal-button-primary" onClick={() => setIsEditing(true)}>Edit</button>
-						</div>
+							<button className="modal-button modal-button-primary" onClick={() => { setShowHistory(false); setIsEditing(true); }}>Edit</button>
+						</div>						
 					</div>
 				</div>		
 			</div>
