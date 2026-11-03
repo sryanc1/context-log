@@ -870,6 +870,47 @@ body {
   color: #23282D;
 }
 
+.item-history-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-history-label {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6B7280;
+  margin-bottom: 4px;
+}
+
+.diff-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #23282D;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.diff-added {
+  background: #DCF3E6;
+  color: #1F7A52;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.diff-removed {
+  background: #FBE2E2;
+  color: #B23B3B;
+  text-decoration: line-through;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.diff-removed + .diff-added {
+  margin-left: 3px;
+}
+
 @media (max-width: 720px) {
   .nav-rail { width: 56px; }
   .nav-rail-label { display: none; }
