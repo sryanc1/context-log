@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import type { ActivityFeedEntry, Item, Project } from '../types/items';
 import { formatDayHeading, formatRelativeTime } from '../utils/time';
+import { ActivityChange } from './ActivityChange';
 
 interface TimelineViewProps {
     entries: ActivityFeedEntry[];
@@ -45,7 +46,7 @@ export function TimelineView({ entries, items, projects, onSelectItem }: Timelin
                             <span className="archive-swatch" style={{ background: project?.color || '#3A4552' }} />
                             <div className="timeline-row-body">
                                 <div className="timeline-row-title">{item?.title ?? '(deleted item)'}</div>
-                                <div className="timeline-row-desc">{entry.description}</div>
+                                <ActivityChange entry={entry} compact plainClassName="timeline-row-desc" />
                             </div>
                             <div className="timeline-row-time">{formatRelativeTime(entry.createdAt)}</div>
                         </button>

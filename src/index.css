@@ -911,6 +911,23 @@ body {
   margin-left: 3px;
 }
 
+.activity-label {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6B7280;
+  margin-bottom: 4px;
+}
+
+.diff-text-compact {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12px;
+}
+
 @media (max-width: 720px) {
   .nav-rail { width: 56px; }
   .nav-rail-label { display: none; }

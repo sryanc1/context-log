@@ -1,22 +1,12 @@
 import { useMemo } from 'react';
 import type { ActivityEntry } from '../types/items';
 import { formatDayHeading } from '../utils/time';
-import { DiffText } from './DiffText';
+import { ActivityChange } from './ActivityChange'
 
 interface ItemHistoryListProps {
     entries: ActivityEntry[];
     loading: boolean;
 }
-
-const FIELD_LABELS: Record<string, string> = {
-    title: 'Title',
-    description: 'Description',
-    type: 'Type',
-    priority: 'Priority',
-    status: 'Status',
-    tags: 'Tags',
-    dueDate: 'Due date',
-};
 
 export function ItemHistoryList({ entries, loading }: ItemHistoryListProps) {
     const groups = useMemo(() => {
@@ -29,46 +19,26 @@ export function ItemHistoryList({ entries, loading }: ItemHistoryListProps) {
         return Array.from(byDay.entries());
     }, [entries]);
 
-    // updateItem logs '(none)' as a placeholder for an empty tag list; treat it as empty here.
-    const cleanValue = (v: string) => (v === '(none)' ? '' : v);
-
     if (loading) return <p className="archive-empty">Loading history...</p>;
     if (entries.length === 0) return <p className="archive-empty">No history recorded yet.</p>;
 
     return (
         <div className="item-history">
-        {groups.map(([day, dayEntries]) => (
-            <div key={day} className="timeline-group">
-            <div className="timeline-day-heading">{day}</div>
-            {dayEntries.map((entry) => (
-                <div key={entry.id} className="item-history-row">
-                <div key={entry.id} className="item-history-row">
-                <div className="item-history-main">
-                    {entry.fieldChanged &&
-                    entry.action !== 'moved' &&
-                    entry.oldValue !== undefined &&
-                    entry.newValue !== undefined ? (
-                    <>
-                        <div className="item-history-label">
-                        {FIELD_LABELS[entry.fieldChanged] ?? entry.fieldChanged} changed
+            {groups.map(([day, dayEntries]) => (
+                <div key={day} className="timeline-group">
+                    <div className="timeline-day-heading">{day}</div>
+                    {dayEntries.map((entry) => (
+                        <div key={entry.id} className="item-history-row">
+                            <div className="item-history-main">
+                            <ActivityChange entry={entry} plainClassName="item-history-desc" />
+                            </div>
+                            <div className="timeline-row-time">
+                            {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
                         </div>
-                        <DiffText oldValue={cleanValue(entry.oldValue)} newValue={cleanValue(entry.newValue)} />
-                    </>
-                    ) : (
-                    <div className="item-history-desc">{entry.description}</div>
-                    )}
-                </div>
-                <div className="timeline-row-time">
-                    {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
-                </div>
-                <div className="timeline-row-time">
-                    {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
+                    ))}
                 </div>
             ))}
-            </div>
-        ))}
         </div>
     );
 }
